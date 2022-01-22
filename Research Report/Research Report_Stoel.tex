@@ -1,0 +1,207 @@
+\documentclass{article}
+\usepackage{setspace}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{mathtools, amssymb , amsthm} % imports amsmath
+\usepackage{nicematrix}
+\usepackage{float}
+\onehalfspacing
+\usepackage[utf8]{inputenc}
+\usepackage{enumerate}
+\usepackage{color,soul}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\usepackage[backend=biber, style=apa, sorting=nty]{biblatex}
+\addbibresource{RRbilbiography.bib}
+
+\title{Research Report Lauke Stoel}
+\author{Lauke Stoel }
+\date{October 2021}
+
+\begin{document}
+
+\input{TitlePage}
+
+\section{Introduction}
+
+Myriads of valuable data on pupil's cognitive ability are periodically collected through International Large-Scale Assessment (ILSA) programmes such as the Programme for International Student Assessment (PISA). PISA is a triennial survey of 15-year-old students around the world that assesses their knowledge and skills in three core domains: reading, mathematics and science. Through PISA, the Organisation for Economic Co-operation and Development (OECD) aims to provide internationally comparable evidence on student performance \parencite{oecd_pisa_2020}. Ideally, these data could be used to compare different education systems to evaluate what features of each system lead to more favourable educational outcomes and inform national policy. This implies a question of causality. A randomised controlled trial would be the golden standard method to expose a causal relationship. However, due to the observational nature of the data, such an experiment is impossible to conduct.
+
+Rubin's potential outcome framework provides a model in which such causal questions could theoretically be addressed in a quasi-experimental setting \parencite{rubin_potential_2004}. In the context of ILSAs, it entails a theoretical experiment where we treat a national educational policy of interest as treatment condition. We theorise that a pupil who is subject to one treatment condition could also have been assigned to the other treatment condition of which the data are non-existing. Those data are treated as missing and are estimated based on existing data from pupils with similar background characteristics, who are in the other (observed) treatment condition. In a recent review of research on causal inference with large-scale assessments in education, Kaplan (2016) proposed an approach to causal inference within Rubin's potential outcomes framework. This approach could theoretically expose causal links between educational outcomes and features of education systems. However, his approach comes with a disclaimer: it has not yet been tested on existing data and currently available software is likely insufficient to fully execute the proposed statistical models \parencite{kaplan_causal_2016}. 
+
+The present thesis tests Kaplan's approach to causal inference on a question currently relevant in the Netherlands, namely whether it would aid the equality of educational opportunity if the age at which pupils are first selected into educational tracks is postponed. This topic is much discussed, as previous research suggests that early tracking is associated with a stronger positive relationship between socioeconomic status (SES) and ability, which is indicative of inequality of educational opportunity \parencite{veldhuis_onderwijscrisis_2021, bol_curricular_2014}. In the context of Kaplan's approach, the equality of educational opportunity would be the educational outcome and the age of first selection would be the feature of an education system.
+
+Kaplan's approach could provide a comprehensive way of addressing such policy questions, but is expected to run into software limitations. Another, theoretical, limitation is that Kaplan's approach is designed to treat the ability level of a pupil as the outcome variable, whereas the above question requires an analysis with a relationship as the outcome variable, namely the one between SES and ability. Furthermore, Kaplan's approach facilitates analyses with a binary treatment assignment, while many real-life policy questions pertain to multiple treatment categories, in this case the age of first selection. 
+Therefore, the research question the current project addresses is: \textit{how can Kaplan's approach to causal inference be extended and applied to inform educational policy regarding tracking, within the confines of currently available software?}
+
+Thus, the objective of this report is twofold: to develop a methodological extension of an existing approach and to test this approach by means of a practical application. The structure of the paper is as follows. First, I provide the theoretical framework of this research: I position Kaplan's approach within causal inference literature, translate his general approach to a step-by-step methodology and subsequently propose two extensions to his approach. The result is three different methodologies: one directly following from Kaplan's original approach, one extension that facilitates including multiple treatments and a second extension that facilitates treating the relationship between a context variable of interest and ability as outcome variable. This section provides an answer to the first part of the research question, namely how Kaplan's approach can be extended. The subsequent methodology section specifies how I will assess the applicability of each of those methods. The methodology section of the final thesis will contain the specifications of how each method is applied to the question of tracking. Since this report is an intermediate product, that part of the methodology section, the results, discussion and conclusion are not yet included.
+
+\section{Theoretical framework}
+\subsection{Positioning Kaplan's approach within causal inference research} \label{translate}
+
+Center stage in Kaplan's approach is his recommendation to use two-step Bayesian propensity score analysis (BPSA) as developed by \textcite{kaplan2012two}. It concerns a Bayesian extension of propensity score analysis (PSA). A main advantage of PSA over other common quasi-experimental methods is its potential to mitigate an endogeneity problem, namely self-selection into schools, by matching the observations in the different treatment arms on important covariates that are correlated with the treatment assignment \parencite{cordero_causal_2018}. However, this benefit only materialises if the assumption holds that all covariates that do in fact influence the treatment assignment are observed or at least correlated with the observed measures. Especially in cross-national research, this is a tall order. Furthermore, the success of the method depends on whether the resulting sample of observations that have the same distribution on all covariates in both treatment arms is large enough. The more covariates that are included, the more likely the assumption is to hold, but the smaller the resulting sample size will be. BPSA provides the same potential advantages and faces the same challenges as PSA regarding covariate measurement and sample size. However, an advantage of BPSA over PSA is that the Bayesian extension provides us with the opportunity to include prior information in our estimation of the propensity scores and the treatment effect. The advantage of two-step BPSA over Bayesian joint modelling procedures is that the propensity scores and the treatment effect are estimated separately \parencite{kaplan2012two}. The two-step approach prevents the estimation of the posterior distribution of the propensity scores from being affected by the estimation of the outcome variable, which is observed after treatment assignment \parencite{kaplan_causal_2016}.
+
+The use of two-step BPSA addresses another relevant methodological challenge. Researchers have recently been drawing more attention to the imbalance that exists between the analytical efforts invested in modelling the cognitive outcomes of PISA and the efforts invested in modelling the context variables. In the former case, measurement error of the latent construct \emph{ability} is taken into account by drawing ten plausible values of ability for each pupil. In the latter case, a simple point estimate is deemed sufficient. Failure to account for measurement error on background variables can lead to biased estimates of ability when comparing across different subgroups of a background variable \parencite{rutkowski2016call,frey2020methodological}. Two-step BPSA addresses this methodological challenge by constructing a posterior distribution of propensity scores for each individual based on a vector of chosen covariates and drawing any large number of values from that distribution per individual. This mimics the way the measurement error of ability is accounted for using plausible values. The posterior standard deviation of that set of propensity scores can be interpreted as the measurement error on the combination of all relevant covariates. So, while it does not quantify the measurement error of each covariate separately, BPSA does give us a measure of uncertainty on the latent construct describing how similar pupils are to each other on a set of covariates. This makes the final estimate of the treatment effect and its comparison across subgroups more accurate.
+
+Nevertheless, selecting the appropriate covariates for this type of analysis remains a major challenge. Kaplan situates his approach within Rubin's potential outcomes framework. One of the assumptions of this framework provides us with at least a theoretical goal post of when the appropriate covariates have been included in the analysis. This is the \emph{strong ignorability} assumption, which holds when the potential outcome under either treatment assignment is completely independent of the treatment assignment mechanism, given a set of covariates. Kaplan refers to the work of \textcite{mackie_cement_1974} for further guidance in selecting the covariates that are of immediate concern to the causal question at hand. This and other assumptions are embedded in the four conditions Kaplan specifies must hold. For a further specification of these conditions, please see Appendix A. 
+
+\subsection{Translating Kaplan's approach to a methodology}
+The first step in applying Kaplan's approach should always be to perform a check on the four conditions in Appendix A. The next phase in applying Kaplan's approach is performing a two-step BPSA. \newline
+
+\textit{Step 1: obtain a propensity score distribution for each pupil.} \newline
+Start by selecting an appropriate model to compute propensity scores with. A propensity score reflects how likely an observation is to be assigned treatment $T=1$ given a set of chosen covariates $X$. Kaplan's approach assumes binary treatment assignment, so a logit model such as
+
+\begin{equation} \label{logit}
+ \log \left\{ \frac{p(T = 1 \mid X)}{1 - p(T = 1 \mid X)} \right\} = \alpha + \beta X\,,
+ \end{equation}
+is in place, where $\alpha$ and $\beta$ are the model parameters that determine how the covariates are weighted to produce the propensity score. An optional step is to include priors on these model parameters in their estimation, such that their posterior distributions read as 
+
+\begin{equation}
+\begin{split}
+ p(\alpha \mid \beta; X, T) & \propto p(X, T \mid \alpha, \beta) \; p(\alpha \mid \beta)\,,\\ 
+ p(\beta \mid \alpha; X, T) & \propto p(X, T \mid \alpha, \beta) \; p(\beta \mid \alpha)\,. 
+\end{split}
+\end{equation}
+
+Then obtain $m = n.iter$ posterior propensity scores $\hat{e}(x)$ for each pupil, using the expected a posteriori (EAP) estimates for $\alpha$ and $\beta$ resulting from Equation \eqref{logit} as follows, 
+
+\begin{equation} \label{pps}
+ \hat{e}(x) = \hat{p}(T = 1 \mid X = x) = \frac{exp(\alpha + \beta x)}{1 + exp(\alpha + \beta x)}\,.
+ \end{equation}
+The result is a distribution of propensity scores for each pupil, of which the EAP and the posterior standard deviation can be calculated. However, instead of taking the EAP here and using that as the final propensity score per pupil, two-step BPSA involves an extra operation to also estimate the treatment effect in a Bayesian manner. \newline
+
+\textit{Step 2: obtain an estimate for the treatment effect}\newline
+Select which propensity score method to employ: stratification on $\hat{e}(x)$, weighting or optimal full matching \parencite{cochran1968effectiveness,hirano2001estimation,hansen2006optimal}. For simplicity's sake, we assume a choice for either stratification or optimal full matching, so that the result is $m$ sets of two matched subsamples of the total population and $m$ corresponding sets of matched propensity scores, $\eta_i$.
+
+Then select an appropriate Bayesian outcome model to estimate the treatment effect with. A straightforward, linear model could suffice, such as 
+
+\begin{equation}\label{outcome}
+\hat{y}_i = \alpha + \gamma \:T_i + \sum_{k=1}^{K} \beta _k X_{ik}\,,
+\end{equation}
+where $\hat{y}_i$ is the ability score estimate of a pupil $i$, $\alpha$ is the intercept, $T_i$ denotes a pupil's treatment assignment and $\gamma$ its coefficient, i.e. the treatment effect, $\beta_k$ represents the set of regression coefficients of $X_{ik}$, values for that pupil on the set of covariates.
+
+Now we can obtain the posterior distribution of the treatment effect. It is optional to include a prior for the treatment effect here, such that the posterior distribution of $\gamma$ is
+\begin{equation} \label{gamma_post}
+p(\gamma \mid \alpha, \beta; x, y, T) \propto p(x, y, T \mid \gamma, \alpha, \beta) \; p(\gamma \mid \alpha, \beta) \,.
+\end{equation}
+
+Now we estimate the treatment effect by drawing $J = n.iter$ values for $\gamma$ from Equation \ref{gamma_post} \emph{for each set of estimated propensity scores $\eta_i$}. See Figure \ref{Fig1} for a visual aid of this process. 
+\vspace{1cm}
+
+\begin{figure}[H]
+\centering
+$\begin{NiceMatrixBlock}[auto-columns-width]
+\begin{aligned}
+Step\;1: \mathbf{\hat{P}} = 
+&\begin{bNiceMatrix}
+\textcolor{ForestGreen}{\hat{e}(x)_{11}} & \hat{e}(x)_{12} & \hdots & \textcolor{ForestGreen}{\hat{e}(x)_{1m}}\\
+\hat{e}(x)_{21} & \textcolor{ForestGreen}{\hat{e}(x)_{22}} & \hdots & \textcolor{ForestGreen}{\hat{e}(x)_{2m}}\\
+\vdots & \vdots & \ddots & \vdots \\
+\textcolor{ForestGreen}{\hat{e}(x)_{N1}} & \textcolor{ForestGreen}{\hat{e}(x)_{N2}} & \hdots & \hat{e}(x)_{Nm}\\
+\end{bNiceMatrix}
+\\
+&
+\begin{NiceMatrix}
+\Downarrow & \Downarrow & \hdots & \Downarrow\\
+\textcolor{ForestGreen}{\eta_1} & \textcolor{ForestGreen}{\eta_2} & \hdots & \textcolor{ForestGreen}{\eta_m}\\
+\end{NiceMatrix}
+\\
+Step\;2: \mathbf{\Gamma}= 
+&\begin{bNiceMatrix}
+\gamma_1(\eta_1) & \gamma_1(\eta_2) & \hdots & \gamma_1(\eta_m)\\
+\gamma_2(\eta_1) & \gamma_2(\eta_2) & \hdots & \gamma_2(\eta_m)\\
+\vdots & \vdots & \ddots & \vdots \\
+\gamma_J(\eta_1) & \gamma_J(\eta_2) & \hdots & \gamma_J(\eta_m)\\
+\end{bNiceMatrix}
+\end{aligned}
+\end{NiceMatrixBlock}$
+\vspace{1cm}
+\caption{Connection between step 1 and 2.}
+\small
+\flushleft
+The first matrix $\mathbf{\hat{P}}$ contains $m$ posterior propensity scores for each of $1:N$ pupils. For each in $m$ iterations, the propensity score matching results in a different subset of comparable pupils. Their set of matched propensity scores, represented by the green values, are stored in $\eta_i$. Then for each $\eta_i$, $J$ values for the treatment effect $\gamma$ are drawn, as presented in the second $J \times m$ matrix $\mathbf{\Gamma}$. 
+\label{Fig1}
+\end{figure}
+
+\pagebreak
+The result is $J \times m$ estimates of the treatment effect. To obtain the final treatment effect estimate \textcite{kaplan2012two} provide the following estimator:
+
+\begin{equation} \label{gamma_est}
+E(\gamma \mid x, y, T)=m^{-1} J^{-1} \sum_{i=1}^{m} \sum_{j=1}^{J} \gamma_{j}\left(\eta_{i}\right)\,,
+\end{equation}
+which takes the average of the posterior sample mean of the treatment effect across all sets of propensity scores. The next step is to check the balance of the propensity score method of choice by examining the variance ratios of both treatment conditions and Cohen’s $d$.
+
+To determine the stability of the treatment effect, the last step in Kaplan's approach is to perform a sensitivity analysis on the causal estimate. We do this by including plausible values on \emph{unobserved} covariates in the outcome model in Equation \ref{outcome} that could possibly be of influence on the treatment assignment or the effect. Small changes in these plausible values that inflict a large change in the causal estimate indicate the presence of hidden biases.\newline
+
+\subsection{Two extensions of Kaplan's approach}
+This section introduces the two extensions of Kaplan's approach I propose to make it applicable to real-life policy questions that require 1) the possibility to include a multiple treatments and 2) treating another relationship as an outcome variable. 
+
+\subsubsection{Extension of step 1: multiple treatment categories}
+To facilitate the use of a treatment variable with multiple categories, one might consider replacing the logit model, that was used to estimate the propensity scores under step 1, with a multinomial model. However, this would be quite computationally intensive, especially when estimated in a Bayesian manner \parencite{caliendo2008some}. Based on the work by \textcite{lechner2001identification}, I suggest estimating a series of binomial models instead. Using the example of age, it entails running several analyses with each a different dichotomy that defines \emph{early} and \emph{late} tracking systems, see Table \ref{Table:1}. Note that designing the dichotomies this way retains the ordinal nature of the example variable age.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{||*{7}{c }||} 
+ \hline
+ \textbf{Country} & \textbf{Age} & $\mathbf{T_1}$ & $\mathbf{T_2}$ & $\mathbf{T_3}$ & $\mathbf{T_4}$ & $\mathbf{T_5}$ \\
+ \hline
+Germany&10&0&0&0&0&0 \\
+ \hline
+ \rule{0pt}{5pt}\vdots&\vdots&\vdots& & & & \\
+ \hline
+ Luxembourg&11&1&0&0&0&0 \\ 
+ \hline
+ \vdots&\vdots& &\vdots& & & \\
+ \hline
+Netherlands&12&1&1&0&0&0\\
+\hline
+\vdots&\vdots& & &\vdots& & \\
+\hline
+Slovenia&14&1&1&1&0&0\\
+\hline
+\vdots&\vdots& & & &\vdots& \\
+\hline
+Portugal&15&1&1&1&1&0\\
+\hline
+\vdots&\vdots& & & & &\vdots\\
+\hline
+Finland&16&1&1&1&1&1\\ 
+ \hline
+\end{tabular}
+\caption{Example dichotomies in treatment assignment $T$ by age of first selection per country}
+\label{Table:1}
+\end{table}
+
+A pair-wise comparison of the treatment effects resulting from each of the analyses will reveal the most informative dichotomy.
+
+\subsubsection{Extension of step 2: relationship as outcome}
+The second extension concerns the possibility of treating a relationship between any covariate of interest, such as SES, and the ability of a pupil as outcome. To that end, I suggest selecting an outcome model with an interaction term between $SES$ and treatment assignment $T$ under step 2 instead of Equation \ref{outcome}, such as 
+
+\begin{equation} \label{interact}
+\hat{y}_i = \alpha + \gamma \:T_i + \beta_1 SES + \beta_2 T_i SES + \sum_{k=3}^{K} \beta _k X_{ik} \, .
+\end{equation}
+
+Instead of constructing the posterior for the regression coefficient of the treatment effect $\gamma$, we solve for $\beta_2$ and run through the rest of the steps as before.
+
+\pagebreak
+
+\section{Methodology}
+To answer the question of how Kaplan's approach can be extended and applied to inform educational policy regarding tracking, I will run three different analyses using the three versions of the approach to the question at hand: Kaplan's approach as outlined in section 2.2, one including the first extension and one including both proposed extensions. I will assess the applicability of each methodology by evaluating 
+
+\begin{enumerate}    
+    \item its ability to produce an outcome of interest to the policy question (see condition 1, Appendix A),
+    \item the stability of the resulting treatment effect as uncovered through a sensitivity analysis, and 
+    \item the ease of application, given the limits of currently available software. 
+\end{enumerate}
+The methodology section of the final thesis will include a specification of how these three methods will be applied to the question of tracking. 
+
+We use the data from PISA 2018, which are publicly available. The data set contains the responses of 10,215 pupils from 79 participating countries and background information on the pupils, their parents and schools \parencite{oecd_pisa_2020}. We enrich this data set with relevant country-level characteristics, such as the age at which pupils are selected into tracks. We perform all analyses in RStudio \parencite{RStudio}.
+
+\newpage
+\printbibliography
+
+\newpage
+\section*{Appendix A}
+\input{Appendix.tex}
+
+\end{document}

@@ -1,0 +1,50 @@
+---
+title: "1. Data import"
+author: "Lauke"
+date: "12/01/2022"
+output: html_document
+---
+
+#Convert big ass PISA data to workable file
+
+```{r Libraries}
+library(haven)
+library(tidyverse)
+library(readxl)
+```
+
+#load in the data
+```{r Libraries}
+alldat <- read_sav("C:/Users/lasto/Documents/Master thesis/Data/SPSS-COG/CY07_MSU_STU_COG.sav")
+
+book1 <- read_sav("C:/Users/lasto/Documents/Master thesis/Data/SPSS-COG/SPSS TO R.sav")
+
+setwd("C:/Users/lasto/Documents/Master thesis/Data")
+```
+
+
+```{r }
+#obtain the math items
+items = read_excel("PISA2018 TechRep_Final-AnnexA.xlsx", sheet = 3) #get the excel in R
+math_items = items %>%
+  pull(1) #pull the first column
+math_items <- math_items[7:length(math_items)] #first 6 entries are not items, so exclude those
+
+
+#select only the math items in the data, plus some information
+pisa18_math = book1 %>%
+  mutate_at(vars(all_of(math_items)), as_factor) %>%
+  select(c(CNT, CNTSCHID, CNTSTUID, BOOKID, all_of(math_items)))
+
+#NB: different NA's can mean different things, R doesn't understand. See SPSS for what they mean. 
+
+#delete the empty columns
+book1_math <- pisa18_math[colSums(!is.na(pisa18_math)) > 0] #leaves 27 columns
+#book1_math <- pisa18_math[, 1:42] #only keep more filled columns
+
+```
+
+```{r Export data file}
+
+```
+
