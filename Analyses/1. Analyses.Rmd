@@ -1,0 +1,86 @@
+---
+title: "1. Analyses"
+author: "Lauke"
+date: "28/01/2022"
+output: html_document
+---
+```{r load in subsetted QQQ data}
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/QQQbook1_math.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/sel_age.Rdata")
+```
+
+wat zijn de variabelen op basis waarvan ik de PSA's ga berekenen? 
+
+```{r Libraries}
+library(haven)
+library(MCMCpack) #needed for PSM procedure MCMClogit function
+library(dplyr)
+library(rjags)
+```
+
+Step 1: obtain a propensity score distribution for each pupil. 
+
+Variables to estimate PS on: 
+- ESCS
+- nr of years after start ISCED 1 (not included for now)
+- age
+- grade: captures whether the student is in the country’s modal grade (value of 0), or the number of grade below or above the modal grade in the country.
+
+
+```{r Prep data step 1}
+#Merge selection age info with QQQ data
+step1_dat <- inner_join(sel_age[,c(1,2,5)], QQQbook1_math) %>% 
+  filter(OECD == 1)  %>% #select only OECD members
+  filter(!is.na(ESCS)) %>% #only complete data points
+  filter(!is.na(GRADE))
+
+step1_dat$group <- ifelse(step1_dat$selection_age <= 12, 0, 1) #if selection age < or = 12, group 0, >12 group 1.
+
+```
+
+
+```{r Estimate posterior coefficients for alpha & betas}
+set.seed(123)
+posterior <- MCMClogit(group ~ as.numeric(GRADE) + as.numeric(AGE) + as.numeric(ESCS), mcmc = 2000, burnin = 1000, thin = 2, data = step1_dat)
+
+plot(posterior) #convergence is fine
+summary(posterior)
+```
+
+
+```{r Estimate propensity scores for each pupil based on posterior samples of alpha and beta}
+#create matrix containing all independent variables + intercept (1)
+X_matrix <- step1_dat %>% 
+  mutate(constant = 1) %>% #add column to be multiplied by intercept
+  dplyr::select(constant, GRADE, AGE, ESCS) %>% #select intercept + Xvars
+  t() %>% #transpose to fit posterior object (col = pupils row = vars)
+  as.matrix() #store as matrix
+
+#multiply the obtained posterior estimates with IV's to obtain propensity scores
+prop_scores <- exp(posterior %*% X_matrix) / #logistic regression, see manuscript equation 3.
+  (1 + exp(posterior %*% X_matrix)) #col = pupils, row = n.iter prop scores
+
+hist(colMeans(prop_scores)) # skewed distribution
+mean(colMeans(prop_scores)) #mean propensity scores is 0.78
+table(step1_dat$group) #about 75% in group 1, so that makes sense. consider oversampling later
+```
+
+```{r}
+colnames(testobj) <- step1_dat$CNTSTUID
+
+testobj2 <- data.frame(propscores = testobj[1,], CNTSTUID = as.numeric(colnames(testobj))) %>% left_join(step1_dat %>% select(CNTSTUID, group))
+
+group0 <- testobj2 %>% filter(group == 0)
+group1 <- testobj2 %>% filter(group == 1)
+
+```
+
+
+
+
+
+
+
+
+
+

@@ -1,4 +1,9 @@
 .Rproj.user
 .Rhistory
-.RData
 .Ruserdata
+
+/Analyses/Data
+Repository_info.txt
+
+.sav
+.xlsx
