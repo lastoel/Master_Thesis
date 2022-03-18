@@ -15,6 +15,7 @@ library(readxl)
 
 ## Cognitive data
 ```{r Read in}
+memory.limit(size = 1048576)
 COGdat <- read_sav("Data/SPSS-COG/CY07_MSU_STU_COG.sav")
 ```
 
@@ -48,7 +49,8 @@ save(book1_math, file = "Workspaces/book1_math.Rdata")
 ```{r}
 QQQdat_stu <- read_sav("Data/SPSS-QQQ/CY07_MSU_STU_QQQ.sav")
 ```
-```{r Subset QQQ data to match booklet}
+
+```{r Subset QQQ data to match selected booklet}
 QQQbook1_math <- QQQdat_stu %>% filter(CNTSTUID %in% book1_math$CNTSTUID)
 ```
 
@@ -66,7 +68,7 @@ colnames(cnt_label) <- c("CNT", "Country")
 
 Age of first selection data
 ```{r}
-sel_age <- read_excel("Data/age at first selection.xlsx", sheet = 11) #get the excel in R
+sel_age <- read_excel("Data/PISA 2018 Results (Volume I)_AnnexB3.XLSX", sheet = 11) #get the excel in R
 
 #create column names
 sel_age[12,1] <- "Country"
