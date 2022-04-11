@@ -1,0 +1,199 @@
+---
+title: "2. Analyses"
+author: "Lauke"
+date: "28/01/2022"
+output: html_document
+---
+
+
+```{r load in data}
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/step1_dat.Rdata")
+```
+
+
+```{r Libraries}
+library(dplyr)
+library(MCMCpack) #needed for PSM procedure MCMClogit function
+library(tableone) #for CreateTableOne function
+```
+
+Step 1: obtain a propensity score distribution for each pupil. 
+
+Variables to estimate PS on. NB: must be variables that were measured before treatment assignment (Kaplan and Chen 2012)
+- ESCS
+- age
+- grade: captures whether the student is in the country’s modal grade (value of 0), or the number of grade below or above the modal grade in the country.
+- ISCED level
+- if the language of the test is the same language spoken at home. 
+
+# Balance check 'before' - only dichotomy = 12
+```{r}
+table1 <-
+  CreateTableOne(
+    vars = c(
+      "Gender",  
+      "AGE",
+      "GRADE", 
+      "ISCEDL", #ISCED level 
+      "ESCS", 
+      "Language" #language at home vs. test
+      ),
+strata = "group12",
+data = step1_dat,
+test = FALSE
+  )
+
+print(table1, smd = T)
+```
+# PROPSENSITY SCORE ESTIMATION
+
+## AGE 11
+```{r Estimate posterior coefficients for alpha & betas - AGE 11}
+set.seed(123)
+posterior_11 <- MCMClogit(group11 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language), mcmc = 2000, burnin = 1000, thin = 2, data = step1_dat)
+
+plot(posterior_11) #convergence is fine
+summary(posterior_11)
+```
+
+```{r Estimate propensity scores for each pupil based on posterior samples of alpha and beta - AGE 11}
+#create matrix containing all independent variables + intercept (1)
+X_matrix_11 <- step1_dat %>% 
+  mutate(constant = 1) %>% #add column to be multiplied by intercept
+  dplyr::select(constant, Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% #select intercept + Xvars
+  t() %>% #transpose to fit posterior object (col = pupils, row = vars)
+  as.matrix() #store as matrix
+
+#multiply the obtained posterior estimates with IV's to obtain propensity scores
+prop_scores_11 <- exp(posterior_11 %*% X_matrix_11) / #logistic regression, see manuscript equation 3.
+  (1 + exp(posterior_11 %*% X_matrix_11)) #col = pupils, row = n.iter prop scores
+
+colnames(prop_scores_11) <- step1_dat$CNTSTUID #give cols student ID names
+
+hist(colMeans(prop_scores_11))
+mean(colMeans(prop_scores_11))
+table(step1_dat$group11)
+```
+
+## AGE 12
+```{r Estimate posterior coefficients for alpha & betas - AGE 12}
+set.seed(123)
+posterior_12 <- MCMClogit(group12 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language), mcmc = 2000, burnin = 1000, thin = 2, data = step1_dat)
+
+plot(posterior_12) #convergence is fine
+summary(posterior_12)
+```
+
+```{r Estimate propensity scores for each pupil based on posterior samples of alpha and beta - AGE 12}
+#create matrix containing all independent variables + intercept (1)
+X_matrix_12 <- step1_dat %>% 
+  mutate(constant = 1) %>% #add column to be multiplied by intercept
+  dplyr::select(constant, Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% #select intercept + Xvars
+  t() %>% #transpose to fit posterior object (col = pupils, row = vars)
+  as.matrix() #store as matrix
+
+#multiply the obtained posterior estimates with IV's to obtain propensity scores
+prop_scores_12 <- exp(posterior_12 %*% X_matrix_12) / #logistic regression, see manuscript equation 3.
+  (1 + exp(posterior_12 %*% X_matrix_12)) #col = pupils, row = n.iter prop scores
+
+colnames(prop_scores_12) <- step1_dat$CNTSTUID #give cols student ID names
+
+hist(colMeans(prop_scores_12)) 
+mean(colMeans(prop_scores_12)) 
+table(step1_dat$group12)
+```
+
+## AGE 14
+```{r Estimate posterior coefficients for alpha & betas - AGE 14}
+set.seed(123)
+posterior_14 <- MCMClogit(group14 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language), mcmc = 2000, burnin = 1000, thin = 2, data = step1_dat)
+
+plot(posterior_14) #convergence is fine
+summary(posterior_14)
+```
+
+```{r Estimate propensity scores for each pupil based on posterior samples of alpha and beta - AGE 14}
+#create matrix containing all independent variables + intercept (1)
+X_matrix_14 <- step1_dat %>% 
+  mutate(constant = 1) %>% #add column to be multiplied by intercept
+  dplyr::select(constant, Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% #select intercept + Xvars
+  t() %>% #transpose to fit posterior object (col = pupils, row = vars)
+  as.matrix() #store as matrix
+
+#multiply the obtained posterior estimates with IV's to obtain propensity scores
+prop_scores_14 <- exp(posterior_14 %*% X_matrix_14) / #logistic regression, see manuscript equation 3.
+  (1 + exp(posterior_14 %*% X_matrix_14)) #col = pupils, row = n.iter prop scores
+
+colnames(prop_scores_14) <- step1_dat$CNTSTUID #give cols student ID names
+
+hist(colMeans(prop_scores_14)) 
+mean(colMeans(prop_scores_14)) 
+table(step1_dat$group14)
+```
+
+## AGE 15
+```{r Estimate posterior coefficients for alpha & betas - AGE 15}
+set.seed(123)
+posterior_15 <- MCMClogit(group15 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language), mcmc = 2000, burnin = 1000, thin = 2, data = step1_dat)
+
+plot(posterior_15) #convergence is fine
+summary(posterior_15)
+```
+
+```{r Estimate propensity scores for each pupil based on posterior samples of alpha and beta - AGE 15}
+#create matrix containing all independent variables + intercept (1)
+X_matrix_15 <- step1_dat %>% 
+  mutate(constant = 1) %>% #add column to be multiplied by intercept
+  dplyr::select(constant, Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% #select intercept + Xvars
+  t() %>% #transpose to fit posterior object (col = pupils, row = vars)
+  as.matrix() #store as matrix
+
+#multiply the obtained posterior estimates with IV's to obtain propensity scores
+prop_scores_15 <- exp(posterior_15 %*% X_matrix_15) / #logistic regression, see manuscript equation 3.
+  (1 + exp(posterior_15 %*% X_matrix_15)) #col = pupils, row = n.iter prop scores
+
+colnames(prop_scores_15) <- step1_dat$CNTSTUID #give cols student ID names
+
+hist(colMeans(prop_scores_15)) 
+mean(colMeans(prop_scores_15)) 
+table(step1_dat$group15)
+```
+```{r Save propensity score files}
+save(prop_scores_11, file = "Workspaces/prop_scores_11.Rdata")
+save(prop_scores_12, file = "Workspaces/prop_scores_12.Rdata")
+save(prop_scores_14, file = "Workspaces/prop_scores_14.Rdata")
+save(prop_scores_15, file = "Workspaces/prop_scores_15.Rdata")
+```
+
+
+# VISUALISATION (only for dichotomoy = 12)
+```{r Check which students with prop scores belong to which group}
+prop_scores_by_group <- data.frame(mean_propscores = colMeans(prop_scores_12), #mean ps per student
+                         CNTSTUID = as.numeric(colnames(prop_scores_12))) %>%  #extract student ID
+  left_join(step1_dat %>% dplyr::select(CNTSTUID, group12)) #join ps and student ID with group membership
+
+# Create separate data files for T = 1 vs T = 0 
+contr <- prop_scores_by_group %>% filter(group12 == 0)
+treat <- prop_scores_by_group %>% filter(group12 == 1)
+mean(contr$mean_propscores)
+mean(treat$mean_propscores)
+
+
+# Create histograms, then plot one and add the other: 
+hist0 <- hist(contr$mean_propscores, breaks=30, plot=FALSE)
+hist1 <- hist(treat$mean_propscores, breaks=30, plot=FALSE)
+plot(hist1, col=rgb(0,0,1,1/4), xlim=c(0,1), 
+     xlab="Propensity score",
+     main="Histogram of propensity scores")  
+plot(hist0, col=rgb(1,0,0,1/4), xlim=c(0,1), add=T) 
+
+```
+
+```{r Remove redudant objects from workspace}
+rm(posterior, X_matrix, table1)
+```
+
+
+
+
+

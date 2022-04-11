@@ -40,8 +40,7 @@ pisa18_math <- book1 %>%
 book1_math <- pisa18_math[colSums(!is.na(pisa18_math)) > 0] #leaves 27 cols of which 23 items
 ```
 
-```{r Export data file}
-save(COGdat, file = "Workspaces/COGdat.Rdata")
+```{r Save data file}
 save(book1_math, file = "Workspaces/book1_math.Rdata")
 ```
 
@@ -54,20 +53,19 @@ QQQdat_stu <- read_sav("Data/SPSS-QQQ/CY07_MSU_STU_QQQ.sav")
 QQQbook1_math <- QQQdat_stu %>% filter(CNTSTUID %in% book1_math$CNTSTUID)
 ```
 
-```{r Export QQQ data file}
-save(QQQdat_stu, file = "Workspaces/QQQdat_stu.Rdata")
+```{r Save QQQ data file}
 save(QQQbook1_math, file = "Workspaces/QQQbook1_math.Rdata")
 ```
 
-Linking country ID to country label:
-```{r}
+## Country level data
+
+```{r Create CNT code to CNT label object}
 cnt_label <- read_excel("Data/PISA2018_CODEBOOK.xlsx", sheet = 2)
 cnt_label <- cnt_label[88:169, 7:8]
 colnames(cnt_label) <- c("CNT", "Country")
 ```
 
-Age of first selection data
-```{r}
+```{r Age of first selection}
 sel_age <- read_excel("Data/PISA 2018 Results (Volume I)_AnnexB3.XLSX", sheet = 11) #get the excel in R
 
 #create column names
@@ -90,10 +88,13 @@ colnames(sel_age)[4:5] <- c("nr_schooltypes", "selection_age")
 sel_age$nr_schooltypes <- as.numeric(sel_age$nr_schooltypes)  
 sel_age$selection_age <- as.numeric(sel_age$selection_age)
 #NA's enforced were the non-OECD "m" entries. nothing lost. 
-
 ```
 
-```{r}
+```{r Save selection age file}
 save(sel_age, file = "Workspaces/sel_age.Rdata")
+```
+
+```{r Remove redudant objects from workspace}
+rm(COGdat, book1, math_items, pisa18_math, QQQdat_stu, cnt_label)
 ```
 

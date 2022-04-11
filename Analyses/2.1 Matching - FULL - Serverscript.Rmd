@@ -1,0 +1,271 @@
+---
+title: "2.1 Matching"
+author: "Lauke"
+date: "05/04/2022"
+output: html_document
+---
+
+```{r Set seed}
+set.seed(123)
+```
+
+```{r load in data}
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/step1_dat.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/prop_scores_11.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/prop_scores_12.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/prop_scores_14.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/prop_scores_15.Rdata")
+```
+
+```{r Libraries}
+#require(devtools)
+#remotes::install_github("markmfredrickson/optmatch")
+library(optmatch) #for optimal full matching algorithm used in MatchIt package
+library(MatchIt)
+library(doSNOW) #for parallel computation
+library(haven) #still necessary for working with step1_dat format
+```
+
+
+# a. Match sub-samples based on each of m.iter sets of propensity scores - USING FULLMATCH
+
+## ON AGE =< 11
+```{r Fullmatch with parallel computation - AGE 11}
+gc() #clean out unused memory
+nclust <- parallel::detectCores() - 1
+cl <- makeCluster(nclust)
+registerDoSNOW(cl)
+
+#add progress bar
+pb <- txtProgressBar(min = 0, max = 1000, style = 3)
+opts <- list(progress = function(n) setTxtProgressBar(pb,n))
+
+#export objects to newly created R seshs
+clusterExport(cl, c('step1_dat'))
+clusterEvalQ(cl, {(library("optmatch"))})
+clusterEvalQ(cl, {(library("MatchIt"))})
+
+start_time <- Sys.time()
+
+fullmatches_p11 <-
+  foreach(i = 1:1000,
+    .options.snow = opts,
+    .packages = c("MatchIt", "optmatch") #export necessary packages to clusters
+  ) %dopar% {
+    
+    matchit(
+      group11 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language),
+      distance = prop_scores_11[i, ], #input propensity scores here
+      method = "full", #fullmatch method
+      estimand = "ATE", #use Average Treatment Effect
+      include.obj = TRUE, #include output of the call to optmatch::fullmatch in output
+      data = step1_dat, 
+    )
+  }
+
+end_time <- Sys.time()
+
+stopCluster(cl)
+```
+
+```{r Outcome and computation time - AGE 11}
+comptime_fullmatch_p11 <- end_time - start_time  
+obj.size_fullmatch_p11 <- object.size(fullmatches_p11) 
+```
+
+```{r Save parallel fullmatch output - AGE 11}
+save(fullmatches_p11, file = "Workspaces/fullmatches_p11.Rdata")
+```
+
+## ON AGE =< 12
+```{r Fullmatch with parallel computation - AGE 12}
+gc() #clean out unused memory
+nclust <- parallel::detectCores() - 1
+cl <- makeCluster(nclust)
+registerDoSNOW(cl)
+
+#add progress bar
+pb <- txtProgressBar(min = 0, max = 1000, style = 3)
+opts <- list(progress = function(n) setTxtProgressBar(pb,n))
+
+#export objects to newly created R seshs
+clusterExport(cl, c('step1_dat'))
+clusterEvalQ(cl, {(library("optmatch"))})
+clusterEvalQ(cl, {(library("MatchIt"))})
+
+start_time <- Sys.time()
+
+fullmatches_p12 <-
+  foreach(i = 1:1000,
+    .options.snow = opts,
+    .packages = c("MatchIt", "optmatch") #export necessary packages to clusters
+  ) %dopar% {
+    
+    matchit(
+      group12 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language),
+      distance = prop_scores_12[i, ], #input propensity scores here
+      method = "full", #fullmatch method
+      estimand = "ATE", #use Average Treatment Effect
+      include.obj = TRUE, #include output of the call to optmatch::fullmatch in output
+      data = step1_dat, 
+    )
+  }
+
+end_time <- Sys.time()
+
+stopCluster(cl)
+```
+
+```{r Outcome and computation time - AGE 12}
+comptime_fullmatch_p12 <- end_time - start_time  
+obj.size_fullmatch_p12 <- object.size(fullmatches_p12) 
+```
+
+```{r Save parallel fullmatch output - AGE 12}
+save(fullmatches_p12, file = "Workspaces/fullmatches_p12.Rdata")
+```
+
+## ON AGE =< 14
+```{r Fullmatch with parallel computation - AGE 14}
+gc() #clean out unused memory
+nclust <- parallel::detectCores() - 1
+cl <- makeCluster(nclust)
+registerDoSNOW(cl)
+
+#add progress bar
+pb <- txtProgressBar(min = 0, max = 1000, style = 3)
+opts <- list(progress = function(n) setTxtProgressBar(pb,n))
+
+#export objects to newly created R seshs
+clusterExport(cl, c('step1_dat'))
+clusterEvalQ(cl, {(library("optmatch"))})
+clusterEvalQ(cl, {(library("MatchIt"))})
+
+start_time <- Sys.time()
+
+fullmatches_p14 <-
+  foreach(i = 1:1000,
+    .options.snow = opts,
+    .packages = c("MatchIt", "optmatch") #export necessary packages to clusters
+  ) %dopar% {
+    
+    matchit(
+      group14 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language),
+      distance = prop_scores_14[i, ], #input propensity scores here
+      method = "full", #fullmatch method
+      estimand = "ATE", #use Average Treatment Effect
+      include.obj = TRUE, #include output of the call to optmatch::fullmatch in output
+      data = step1_dat, 
+    )
+  }
+
+end_time <- Sys.time()
+
+stopCluster(cl)
+```
+
+```{r Outcome and computation time - AGE 14}
+comptime_fullmatch_p14 <- end_time - start_time  
+obj.size_fullmatch_p14 <- object.size(fullmatches_p14)
+```
+
+```{r Save parallel fullmatch output - AGE 14}
+save(fullmatches_p14, file = "Workspaces/fullmatches_p14.Rdata")
+```
+
+## ON AGE =< 15
+```{r Fullmatch with parallel computation - AGE 15}
+gc() #clean out unused memory
+nclust <- parallel::detectCores() - 1
+cl <- makeCluster(nclust)
+registerDoSNOW(cl)
+
+#add progress bar
+pb <- txtProgressBar(min = 0, max = 1000, style = 3)
+opts <- list(progress = function(n) setTxtProgressBar(pb,n))
+
+#export objects to newly created R seshs
+clusterExport(cl, c('step1_dat'))
+clusterEvalQ(cl, {(library("optmatch"))})
+clusterEvalQ(cl, {(library("MatchIt"))})
+
+start_time <- Sys.time()
+
+fullmatches_p15 <-
+  foreach(i = 1:1000,
+    .options.snow = opts,
+    .packages = c("MatchIt", "optmatch") #export necessary packages to clusters
+  ) %dopar% {
+    
+    matchit(
+      group15 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language),
+      distance = prop_scores_15[i, ], #input propensity scores here
+      method = "full", #fullmatch method
+      estimand = "ATE", #use Average Treatment Effect
+      include.obj = TRUE, #include output of the call to optmatch::fullmatch in output
+      data = step1_dat, 
+    )
+  }
+
+end_time <- Sys.time()
+
+stopCluster(cl)
+```
+
+```{r Outcome and computation time - AGE 15}
+comptime_fullmatch_p15 <- end_time - start_time  
+obj.size_fullmatch_p15 <- object.size(fullmatches_p15) 
+```
+
+```{r Save parallel fullmatch output - AGE 15}
+save(fullmatches_p15, file = "Workspaces/fullmatches_p15.Rdata")
+```
+
+## Save comp times and file sizes
+```{r Save comp times and sizes as lists}
+comp_times_full <-
+  list(
+    "comptime_fullmatch_p11" = comptime_fullmatch_p11,
+    "comptime_fullmatch_p12" = comptime_fullmatch_p12,
+    "comptime_fullmatch_p14" = comptime_fullmatch_p14,
+    "comptime_fullmatch_p15" = comptime_fullmatch_p15
+  )
+
+obj_sizes_full <-
+  list(
+    "obj.size_fullmatch_p11" = obj.size_fullmatch_p11,
+    "obj.size_fullmatch_p12" = obj.size_fullmatch_p12,
+    "obj.size_fullmatch_p14" = obj.size_fullmatch_p14,
+    "obj.size_fullmatch_p15" = obj.size_fullmatch_p15
+  )
+
+save(comp_times_full, file = "Workspaces/comptimes_full.Rdata")
+save(obj_sizes_full, file = "Workspaces/obj_sizes_full.Rdata")
+```
+
+
+# b. Create matched data sets - USING FULLMATCH
+
+```{r Creating matched datasets for each AGE dichotomy}
+#create dataset age =< 11
+fullmatchdat_p11 <- lapply(fullmatches_p11, function(x) {match.data(x, group = "all", distance = "prop.score", data = step1_dat, drop.unmatched = T)})
+
+#create dataset age =< 12
+fullmatchdat_p12 <- lapply(fullmatches_p12, function(x) {match.data(x, group = "all", distance = "prop.score", data = step1_dat, drop.unmatched = T)})
+
+#create dataset age =< 14
+fullmatchdat_p14 <- lapply(fullmatches_p14, function(x) {match.data(x, group = "all", distance = "prop.score", data = step1_dat, drop.unmatched = T)})
+
+#create dataset age =< 15
+fullmatchdat_p15 <- lapply(fullmatches_p15, function(x) {match.data(x, group = "all", distance = "prop.score", data = step1_dat, drop.unmatched = T)})
+
+```
+
+```{r Save matched datasets for each AGE dichotomy}
+save(fullmatchdat_p11, file = "Workspaces/fullmatchdat_p11.Rdata")
+save(fullmatchdat_p12, file = "Workspaces/fullmatchdat_p12.Rdata")
+save(fullmatchdat_p14, file = "Workspaces/fullmatchdat_p14.Rdata")
+save(fullmatchdat_p15, file = "Workspaces/fullmatchdat_p15.Rdata")
+```
+
+

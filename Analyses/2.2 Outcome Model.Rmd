@@ -1,0 +1,79 @@
+---
+title: "2.2 Outcome Model"
+author: "Lauke"
+date: "05/04/2022"
+output: html_document
+---
+
+2. Obtain an estimate for the treatment effect
+
+```{r Load data}
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/fullmatchdat.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/PVs.Rdata")
+```
+
+
+```{r Libraries}
+library(dplyr)
+library(MCMCpack)
+```
+
+Now we have 1000 different sets of matched units to pour into the analyses that estimates the treatment effect. First, we have to define the Y-variable on which we're regressing: ability.
+
+### WITH FULLMATCH
+
+```{r Create step2 matched data sets}
+#add ability estimate to each matched dataset for step 2
+step2_dat_full <- lapply(fullmatchdat, function(x) {inner_join(x, PVs[,c(1,12)], by = "CNTSTUID")})
+
+step2_dat_full[[1]]
+```
+
+```{r}
+posterior_treat_full <- lapply(step2_dat_full, function(x) {
+    MCMCregress(
+      ability ~ as.factor(group) + as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language),
+      mcmc = 1000,
+      burnin = 1000,
+      data = x
+    )
+  })
+
+plot(posterior_treat_full[[1]]) #convergence is fine
+summary(posterior_treat_full[[1]]) #treatment effect -0.3772, non-significant
+
+m.iter <- 1000
+n.iter <- 3
+treatmentmatrix <- matrix(NA, nrow = n.iter, ncol = m.iter)
+i <- 1
+
+for (i in 1:n.iter){
+  treatmentmatrix[i,] <- posterior_treat_full[[i]][,2]
+}
+
+treatmentmatrix
+```
+
+
+### WITH PAIR MATCH
+
+```{r Create step2 matched data sets}
+#add ability estimate to each matched dataset for step 2
+step2_dat_pair <- lapply(pairmatchdat, function(x) {inner_join(x, PVs[,c(1,12)], by = "CNTSTUID")})
+
+step2_dat_pair[[1]]
+```
+
+```{r}
+posterior_treat_pair <- lapply(step2_dat_pair, function(x) {
+    MCMCregress(
+      ability ~ as.factor(group) + as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language),
+      mcmc = 2000,
+      burnin = 1000,
+      data = x
+    )
+  })
+
+plot(posterior_treat_pair[[1]]) #convergence 
+summary(posterior_treat_full[[1]]) #treatment effect
+```

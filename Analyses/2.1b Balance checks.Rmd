@@ -1,0 +1,29 @@
+---
+title: "2.1b Balance checks"
+author: "Lauke"
+date: "06/04/2022"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(haven)
+```
+
+
+```{r check balance stuff}
+#NB: run matchit once with method = NULL. en dan de balance stuff.
+sum1 <- as.data.frame(summary(fullmatches[[1]])$sum.match)
+```
+
+Attempt to replicate balance indices:
+```{r}
+mean1 <- as.numeric(fullmatchdat[[1]] %>% filter(group == 0) %>% summarise(mean(AGE)))
+mean2 <- as.numeric(fullmatchdat[[1]] %>% filter(group == 1) %>% summarise(mean(AGE)))
+
+var1 <- as.numeric(fullmatchdat[[1]] %>% filter(group == 0) %>% summarise(var(AGE)))
+var2 <- as.numeric(fullmatchdat[[1]] %>% filter(group == 1) %>% summarise(var(AGE)))
+
+SMD <- (mean2 - mean1)/sqrt((var1 + var2)/2)
+VR <- var1/var2
+```

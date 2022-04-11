@@ -1,0 +1,60 @@
+---
+title: "1. Data pre-processing"
+author: "Lauke"
+date: "22/03/2022"
+output: html_document
+---
+
+```{r Libraries}
+library(haven)
+library(dplyr)
+library(tidyr)
+```
+
+```{r Load in data}
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/QQQbook1_math.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/sel_age.Rdata")
+```
+
+```{r Prep data step 1}
+#Merge selection age info with QQQ data
+step1_dat <- inner_join(sel_age[,c(1,2,4,5)], QQQbook1_math, by = "CNT") %>% 
+  filter(OECD == 1)  %>% #select only OECD members
+  dplyr::select(CNTSTUID, selection_age, nr_schooltypes, AGE, ESCS, GRADE, ISCEDL, ST004D01T, ST022Q01TA) %>% #select used vars only
+  rename(Gender = ST004D01T, Language = ST022Q01TA) %>% 
+  drop_na()
+    
+table(step1_dat$selection_age) #dichotomies at 11, 12, 14 and 15 
+
+step1_dat$group11 <- ifelse(step1_dat$selection_age <= 11, 0, 1) #if selection age < or = 12, group 0, >12 group 1.
+step1_dat$group12 <- ifelse(step1_dat$selection_age <= 12, 0, 1) #if selection age < or = 12, group 0, >12 group 1.
+
+step1_dat$group14 <- ifelse(step1_dat$selection_age <= 14, 0, 1) #if selection age < or = 14, group 0, >14 group 1.
+step1_dat$group15 <- ifelse(step1_dat$selection_age <= 15, 0, 1) #if selection age < or = 15, group 0, >15 group 1.
+
+all.equal(step1_dat$group12, ifelse(step1_dat$selection_age <= 13, 0, 1)) #NB: 
+```
+```{r Latex table observations per age}
+kable(table(step1_dat$selection_age), format = "latex", caption = "Frequencies of age at first selection in OECD countries")
+```
+
+
+```{r Save step1 data}
+save(step1_dat, file = "Workspaces/step1_dat.Rdata")
+```
+
+```{r Prep data step 2: add ability estimates to dataset}
+#obtain 10 plausible values on the MATH items per pupil from the original dataset
+PVs <- QQQbook1_math %>% dplyr::select(CNTSTUID, starts_with("PV") & ends_with("MATH")) #select PVs for all students who took maths items
+PVs$ability <- rowMeans(PVs[,2:11]) #compute ability estimate per pupil
+```
+
+```{r Save PV data}
+save(PVs, file = "Workspaces/PVs.Rdata")
+```
+
+
+```{r Remove redudant objects from workspace}
+rm(QQQbook1_math, sel_age)
+```
+

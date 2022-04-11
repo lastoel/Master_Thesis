@@ -1,0 +1,267 @@
+---
+title: "2.1 Matching"
+author: "Lauke"
+date: "05/04/2022"
+output: html_document
+---
+
+```{r Set seed}
+set.seed(123)
+```
+
+```{r load in data}
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/step1_dat.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/prop_scores_11.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/prop_scores_12.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/prop_scores_14.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/prop_scores_15.Rdata")
+```
+
+```{r Libraries}
+#require(devtools)
+#remotes::install_github("markmfredrickson/optmatch")
+library(optmatch) #for optimal pair matching algorithm used in MatchIt package
+library(MatchIt)
+library(doSNOW) #for parallel computation
+library(haven) #still necessary for working with step1_dat format
+```
+
+
+# a. Match sub-samples based on each of m.iter sets of propensity scores - USING PAIR MATCH
+
+## ON AGE =< 11
+```{r Optimal pair matching with parallel computation - AGE 11}
+gc() #clean out unused memory
+nclust <- parallel::detectCores() - 1
+cl <- makeCluster(nclust)
+registerDoSNOW(cl)
+
+#add progress bar
+pb <- txtProgressBar(min = 0, max = 1000, style = 3)
+opts <- list(progress = function(n) setTxtProgressBar(pb,n))
+
+#export objects to newly created R seshs
+clusterExport(cl, c('step1_dat'))
+clusterEvalQ(cl, {library("MatchIt")})
+
+#run the matchit function on multiple cores across X iterations of propensity scores
+start_time <- Sys.time()
+
+pairmatches_p11 <-
+  foreach(i = 1:1000,
+    .options.snow = opts,
+    .packages = c("MatchIt", "optmatch") #export necessary packages to clusters
+  ) %dopar% {
+    matchit(
+      group11 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language),
+      distance = prop_scores_11[i, ],
+      method = "optimal",
+      estimand = "ATT", #pairmatch requires ATT or ATC estimand. ATE not possible. 
+      include.obj = TRUE,
+      data = step1_dat
+    )
+  }
+
+end_time <- Sys.time()
+
+stopCluster(cl)
+```
+
+```{r Outcome and computation time}
+comptime_pairmatch_p11 <- end_time - start_time
+obj.size_pairmatch_p11 <- object.size(pairmatches_p11)
+```
+
+```{r Save parallel pairmatch output}
+save(pairmatches_p11, file = "Workspaces/pairmatches_p11.Rdata")
+```
+
+
+## ON AGE =< 12
+```{r Optimal pair matching with parallel computation - AGE 12}
+gc() #clean out unused memory
+nclust <- parallel::detectCores() - 1
+cl <- makeCluster(nclust)
+registerDoSNOW(cl)
+
+#add progress bar
+pb <- txtProgressBar(min = 0, max = 1000, style = 3)
+opts <- list(progress = function(n) setTxtProgressBar(pb,n))
+
+#export objects to newly created R seshs
+clusterExport(cl, c('step1_dat'))
+clusterEvalQ(cl, {library("MatchIt")})
+
+#run the matchit function on multiple cores across X iterations of propensity scores
+start_time <- Sys.time()
+
+pairmatches_p12 <-
+  foreach(i = 1:1000,
+    .options.snow = opts,
+    .packages = c("MatchIt", "optmatch") #export necessary packages to clusters
+  ) %dopar% {
+    matchit(
+      group12 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language),
+      distance = prop_scores_12[i, ],
+      method = "optimal",
+      estimand = "ATT", #pairmatch requires ATT or ATC estimand. ATE not possible. 
+      include.obj = TRUE,
+      data = step1_dat
+    )
+  }
+
+end_time <- Sys.time()
+
+stopCluster(cl)
+```
+
+```{r Outcome and computation time}
+comptime_pairmatch_p12 <- end_time - start_time
+obj.size_pairmatch_p12 <- object.size(pairmatches_p12)
+```
+
+```{r Save parallel pairmatch output}
+save(pairmatches_p12, file = "Workspaces/pairmatches_p12.Rdata")
+```
+
+
+
+## ON AGE =< 14
+```{r Optimal pair matching with parallel computation - AGE 14}
+gc() #clean out unused memory
+nclust <- parallel::detectCores() - 1
+cl <- makeCluster(nclust)
+registerDoSNOW(cl)
+
+#add progress bar
+pb <- txtProgressBar(min = 0, max = 1000, style = 3)
+opts <- list(progress = function(n) setTxtProgressBar(pb,n))
+
+#export objects to newly created R seshs
+clusterExport(cl, c('step1_dat'))
+clusterEvalQ(cl, {library("MatchIt")})
+
+#run the matchit function on multiple cores across X iterations of propensity scores
+start_time <- Sys.time()
+
+pairmatches_p14 <-
+  foreach(i = 1:1000,
+    .options.snow = opts,
+    .packages = c("MatchIt", "optmatch") #export necessary packages to clusters
+  ) %dopar% {
+    matchit(
+      group14 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language),
+      distance = prop_scores_14[i, ],
+      method = "optimal",
+      estimand = "ATT", #pairmatch requires ATT or ATC estimand. ATE not possible. 
+      include.obj = TRUE,
+      data = step1_dat
+    )
+  }
+
+end_time <- Sys.time()
+
+stopCluster(cl)
+```
+
+```{r Outcome and computation time}
+comptime_pairmatch_p14 <- end_time - start_time
+obj.size_pairmatch_p14 <- object.size(pairmatches_p14)
+```
+
+```{r Save parallel pairmatch output}
+save(pairmatches_p14, file = "Workspaces/pairmatches_p14.Rdata")
+```
+
+
+## ON AGE =< 15
+```{r Optimal pair matching with parallel computation - AGE 15}
+gc() #clean out unused memory
+nclust <- parallel::detectCores() - 1
+cl <- makeCluster(nclust)
+registerDoSNOW(cl)
+
+#add progress bar
+pb <- txtProgressBar(min = 0, max = 1000, style = 3)
+opts <- list(progress = function(n) setTxtProgressBar(pb,n))
+
+#export objects to newly created R seshs
+clusterExport(cl, c('step1_dat'))
+clusterEvalQ(cl, {library("MatchIt")})
+
+#run the matchit function on multiple cores across X iterations of propensity scores
+start_time <- Sys.time()
+
+pairmatches_p15 <-
+  foreach(i = 1:1000,
+    .options.snow = opts,
+    .packages = c("MatchIt", "optmatch") #export necessary packages to clusters
+  ) %dopar% {
+    matchit(
+      group15 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language),
+      distance = prop_scores_15[i, ],
+      method = "optimal",
+      estimand = "ATT", #pairmatch requires ATT or ATC estimand. ATE not possible. 
+      include.obj = TRUE,
+      data = step1_dat
+    )
+  }
+
+end_time <- Sys.time()
+
+stopCluster(cl)
+```
+
+```{r Outcome and computation time}
+comptime_pairmatch_p15 <- end_time - start_time
+obj.size_pairmatch_p15 <- object.size(pairmatches_p15)
+```
+
+```{r Save parallel pairmatch output}
+save(pairmatches_p15, file = "Workspaces/pairmatches_p15.Rdata")
+```
+
+
+## Save comp times and file sizes
+```{r Save comp times and sizes as lists}
+comp_times_pair <-
+  list(
+    "comptime_pairmatch_p11" = comptime_pairmatch_p11,
+    "comptime_pairmatch_p12" = comptime_pairmatch_p12,
+    "comptime_pairmatch_p14" = comptime_pairmatch_p14,
+    "comptime_pairmatch_p15" = comptime_pairmatch_p15
+  )
+
+obj_sizes_pair <-
+  list(
+    "obj.size_pairmatch_p11" = obj.size_pairmatch_p11,
+    "obj.size_pairmatch_p12" = obj.size_pairmatch_p12,
+    "obj.size_pairmatch_p14" = obj.size_pairmatch_p14,
+    "obj.size_pairmatch_p15" = obj.size_pairmatch_p15
+  )
+
+save(comp_times_pair, file = "Workspaces/comptimes_pair.Rdata")
+save(obj_sizes_pair, file = "Workspaces/obj_sizes_pair.Rdata")
+```
+# b. Create matched data sets -  USING PAIR MATCH
+
+```{r Creating matched datasets for each AGE dichotomy}
+#create dataset age =< 11
+pairmatchdat_p11 <- lapply(pairmatches_p11, function(x) {match.data(x, group = "all", distance = "prop.score", data = step1_dat, drop.unmatched = T)})
+
+#create dataset age =< 12
+pairmatchdat_p12 <- lapply(pairmatches_p12, function(x) {match.data(x, group = "all", distance = "prop.score", data = step1_dat, drop.unmatched = T)})
+
+#create dataset age =< 14
+pairmatchdat_p14 <- lapply(pairmatches_p14, function(x) {match.data(x, group = "all", distance = "prop.score", data = step1_dat, drop.unmatched = T)})
+
+#create dataset age =< 15
+pairmatchdat_p15 <- lapply(pairmatches_p15, function(x) {match.data(x, group = "all", distance = "prop.score", data = step1_dat, drop.unmatched = T)})
+```
+
+```{r Save matched datasets for each AGE dichotomy}
+save(pairmatchdat_p11, file = "Workspaces/pairmatchdat_p11.Rdata")
+save(pairmatchdat_p12, file = "Workspaces/pairmatchdat_p12.Rdata")
+save(pairmatchdat_p14, file = "Workspaces/pairmatchdat_p14.Rdata")
+save(pairmatchdat_p15, file = "Workspaces/pairmatchdat_p15.Rdata")
+```
