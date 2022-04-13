@@ -13,11 +13,12 @@ library(haven)
 
 ```{r check balance stuff}
 #NB: run matchit once with method = NULL. en dan de balance stuff.
-sum1 <- as.data.frame(summary(fullmatches[[1]])$sum.match)
+summary(fullmatches[[1]])
 ```
 
 Attempt to replicate balance indices:
-```{r}
+```{r Balance indices for All Data}
+#FOR "ALL DAT": 
 mean1 <- as.numeric(fullmatchdat[[1]] %>% filter(group == 0) %>% summarise(mean(AGE)))
 mean2 <- as.numeric(fullmatchdat[[1]] %>% filter(group == 1) %>% summarise(mean(AGE)))
 
@@ -25,5 +26,80 @@ var1 <- as.numeric(fullmatchdat[[1]] %>% filter(group == 0) %>% summarise(var(AG
 var2 <- as.numeric(fullmatchdat[[1]] %>% filter(group == 1) %>% summarise(var(AGE)))
 
 SMD <- (mean2 - mean1)/sqrt((var1 + var2)/2)
-VR <- var1/var2
+VR <- var2/var1
 ```
+
+```{r Balance indices for Matched Data}
+#write a function that calculated the balance indices for each variable in a matched dataset
+SMD_calculator_matched <- function(matched_dataset){
+  #calculate weighted means for each variable in dataset by group:
+  weighted_means <- matched_dataset %>% group_by(group) %>% summarise(across(where(is.numeric), ~ weighted.mean(.x, w = weights)))
+  #calculate variances for each variable in dataset by group:
+  grouped_variances <- matched_dataset %>% group_by(group) %>% summarise(across(where(is.numeric), ~var(.x)))
+  
+  #calculate SMD
+  SMD <- (weighted_means[1,] - weighted_means[2,])/sqrt((grouped_variances[1,] + grouped_variances[2,])/2)
+  
+  #return output
+  return(SMD)
+}
+
+VR_calculator_matched <- function(matched_dataset){
+  #calculate weighted variances for each variable in the dataset BY GROUP separately
+  weighted_variances_contr <- matched_dataset %>% filter(group == 0) %>% dplyr::select(where(is.numeric)) %>% cov.wt(., wt = .$weights)
+  weighted_variances_treat <- matched_dataset %>% filter(group == 1) %>% dplyr::select(where(is.numeric)) %>% cov.wt(., wt = .$weights)
+  
+  #calculate VR
+  VR <- diag(weighted_variances_treat$cov/weighted_variances_contr$cov)
+  
+  #return output
+  return(VR)
+}
+
+#apply both functions to each dataset in the list of datasets: make a big ass data frame for SMD's and VR's to take averages over
+#NB: have to do this for fullmatchdat_11, 12, 14 and 15 + the pair match data if necessary
+SMDs_matched <- fullmatchdat %>% lapply(., SMD_calculator_matched) %>% do.call(rbind, .) %>% as.data.frame()
+VRs_matched  <- fullmatchdat %>% lapply(., VR_calculator_matched)  %>% do.call(rbind, .) %>% as.data.frame()
+
+```
+
+```{r Create table of mean and SE of balance indices per variable DO FOR EACH AGE GROUP}
+colMeans(SMDs_matched)
+
+results <- matrix(0, 6, 6)
+rownames(results) <- c("Gender", "AGE", "GRADE", "ISCEDL", "ESCS", "Language")
+colnames(results) <- c("SMD", "SMD_2.5%", "SMD_97.5%", "VR", "VR_2.5%", "VR_97.5%")
+
+results[,1] <- SMDs_matched %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% colMeans()
+results[,2] <- SMDs_matched %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% apply(., 2, quantile, 0.025)
+results[,3] <- SMDs_matched %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% apply(., 2, quantile, 0.975)
+results[,4] <- VRs_matched  %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% colMeans()
+results[,2] <- VRs_matched  %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% apply(., 2, quantile, 0.025)
+results[,2] <- VRs_matched  %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% apply(., 2, quantile, 0.975)
+```
+
+
+```{r}
+obj <- as.data.frame(colMeans(prop_scores)) %>% mutate(CNTSTUID = as.double(rownames(obj)))
+obj <- obj %>% rename(MPS = `colMeans(prop_scores)`)
+
+obj2 <- fullmatchdat[[1]] %>% dplyr::select(CNTSTUID, subclass)
+obj3 <- inner_join(obj, obj2, by = "CNTSTUID")
+
+obj4 = obj3 %>% group_by(subclass) %>% summarise(M= mean(MPS)) %>%
+  arrange(M) %>%
+  mutate(newclass = 1:dim(obj4)[1])
+plot(obj4$newclass, obj4$M)
+
+Mtest = lm(M ~ newclass ,  data=obj4)
+
+summary(Mtest)
+```
+
+
+
+
+
+
+
+
