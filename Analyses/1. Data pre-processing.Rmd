@@ -35,7 +35,29 @@ step1_dat$group15 <- ifelse(step1_dat$selection_age <= 15, 0, 1) #if selection a
 all.equal(step1_dat$group12, ifelse(step1_dat$selection_age <= 13, 0, 1)) #NB: 
 ```
 ```{r Latex table observations per age}
-kable(table(step1_dat$selection_age), format = "latex", caption = "Frequencies of age at first selection in OECD countries")
+kable(table(step1_dat$selection_age), 
+      format = "latex", 
+      caption = "Frequencies of age at first selection in OECD countries")
+```
+
+```{r Latex table selection age + groups}
+kable(sel_age %>% filter(OECD_status == 1) %>% 
+        dplyr::select(Country, selection_age) %>% 
+        mutate(group11 = ifelse(selection_age <= 11, 0, 1),
+               group12 = ifelse(selection_age <= 12, 0, 1),
+               group14 = ifelse(selection_age <= 14, 0, 1),
+               group15 = ifelse(selection_age <= 15, 0, 1)), 
+      format = "latex", 
+      col.names = c("Country", "Age at first selection", "Grouping by age 11", "Grouping by age 12", "Grouping by age 14", "Grouping by age 15"), 
+      caption = "Age at first selection of each OECD country")
+```
+
+```{r Simple table}
+kable(sel_age %>% filter(OECD_status == 1) %>% 
+        dplyr::select(Country, selection_age),
+      format = "latex", 
+      col.names = c("Country", "Age at first selection"), 
+      caption = "Age at first selection of each OECD country")
 ```
 
 
