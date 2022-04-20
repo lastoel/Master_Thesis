@@ -79,22 +79,17 @@ results[,2] <- VRs_matched  %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, 
 ```
 
 
-```{r}
-obj <- as.data.frame(colMeans(prop_scores)) %>% mutate(CNTSTUID = as.double(rownames(obj)))
-obj <- obj %>% rename(MPS = `colMeans(prop_scores)`)
+```{r Check distribution of matched observations per subclass}
+classdist <- fullmatchdat[[1]] %>% group_by(subclass) %>% count()
 
-obj2 <- fullmatchdat[[1]] %>% dplyr::select(CNTSTUID, subclass)
-obj3 <- inner_join(obj, obj2, by = "CNTSTUID")
+hist(classdist$n)
+barplot(height = classdist$n, xlab = "Subclasses", names.arg = classdist$subclass)
+barplot(height = classdist$n[classdist$n > 2], names.arg = classdist$subclass[classdist$n > 2])
 
-obj4 = obj3 %>% group_by(subclass) %>% summarise(M= mean(MPS)) %>%
-  arrange(M) %>%
-  mutate(newclass = 1:dim(obj4)[1])
-plot(obj4$newclass, obj4$M)
-
-Mtest = lm(M ~ newclass ,  data=obj4)
-
-summary(Mtest)
+length(classdist$n[classdist$n > 2]) #633 subclasses with more than 2 matches
+length(classdist$n[classdist$n > 3]) #484 with more than 3
 ```
+
 
 
 
