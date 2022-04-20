@@ -15,19 +15,15 @@ load("~/GitHub/Master_Thesis/Analyses/Workspaces/step1_dat.Rdata")
 library(dplyr)
 library(MCMCpack) #needed for PSM procedure MCMClogit function
 library(tableone) #for CreateTableOne function
+library(MatchIt)
+library(ggplot2)
+library(ggpubr) #to make grid plot
 ```
 
 Step 1: obtain a propensity score distribution for each pupil. 
 
-Variables to estimate PS on. NB: must be variables that were measured before treatment assignment (Kaplan and Chen 2012)
-- ESCS
-- age
-- grade: captures whether the student is in the country’s modal grade (value of 0), or the number of grade below or above the modal grade in the country.
-- ISCED level
-- if the language of the test is the same language spoken at home. 
-
 # Balance check 'before' - only dichotomy = 12
-```{r}
+```{r Balance check using TableOne}
 table1 <-
   CreateTableOne(
     vars = c(
@@ -38,13 +34,25 @@ table1 <-
       "ESCS", 
       "Language" #language at home vs. test
       ),
-strata = "group12",
+strata = "group15",
 data = step1_dat,
 test = FALSE
   )
 
 print(table1, smd = T)
 ```
+```{r Balance check using MatchIt}
+balance_pre <- summary(matchit(
+      group15 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language),
+      method = NULL, #no method for 'pre-matching' balance
+      estimand = "ATE", 
+      data = step1_dat, 
+    ))
+
+kable(as.data.frame(balance_pre$sum.all)[-1,1:4], digits = 2)
+```
+
+
 # PROPSENSITY SCORE ESTIMATION
 
 ## AGE 11
@@ -158,6 +166,7 @@ hist(colMeans(prop_scores_15))
 mean(colMeans(prop_scores_15)) 
 table(step1_dat$group15)
 ```
+
 ```{r Save propensity score files}
 save(prop_scores_11, file = "Workspaces/prop_scores_11.Rdata")
 save(prop_scores_12, file = "Workspaces/prop_scores_12.Rdata")
@@ -166,27 +175,104 @@ save(prop_scores_15, file = "Workspaces/prop_scores_15.Rdata")
 ```
 
 
-# VISUALISATION (only for dichotomoy = 12)
-```{r Check which students with prop scores belong to which group}
-prop_scores_by_group <- data.frame(mean_propscores = colMeans(prop_scores_12), #mean ps per student
-                         CNTSTUID = as.numeric(colnames(prop_scores_12))) %>%  #extract student ID
-  left_join(step1_dat %>% dplyr::select(CNTSTUID, group12)) #join ps and student ID with group membership
+# VISUALISATION of overlap propensity score distributions
 
-# Create separate data files for T = 1 vs T = 0 
-contr <- prop_scores_by_group %>% filter(group12 == 0)
-treat <- prop_scores_by_group %>% filter(group12 == 1)
-mean(contr$mean_propscores)
-mean(treat$mean_propscores)
+```{r Propensity scores by treatment assignment}
+prop_scores_by_group11 <- data.frame(mean_propscores = colMeans(prop_scores_11), #mean ps per student
+                         CNTSTUID = as.numeric(colnames(prop_scores_11))) %>%  #extract student ID
+  left_join(step1_dat %>% dplyr::select(CNTSTUID, group11), by = "CNTSTUID") #join ps and student ID with group membership
+
+prop_scores_by_group12 <- data.frame(mean_propscores = colMeans(prop_scores_12),
+                         CNTSTUID = as.numeric(colnames(prop_scores_12))) %>% 
+  left_join(step1_dat %>% dplyr::select(CNTSTUID, group12), by = "CNTSTUID") 
+
+prop_scores_by_group14 <- data.frame(mean_propscores = colMeans(prop_scores_14),
+                         CNTSTUID = as.numeric(colnames(prop_scores_14))) %>% 
+  left_join(step1_dat %>% dplyr::select(CNTSTUID, group14), by = "CNTSTUID") 
+
+prop_scores_by_group15 <- data.frame(mean_propscores = colMeans(prop_scores_15),
+                         CNTSTUID = as.numeric(colnames(prop_scores_15))) %>% 
+  left_join(step1_dat %>% dplyr::select(CNTSTUID, group15), by = "CNTSTUID") 
+```
 
 
-# Create histograms, then plot one and add the other: 
-hist0 <- hist(contr$mean_propscores, breaks=30, plot=FALSE)
-hist1 <- hist(treat$mean_propscores, breaks=30, plot=FALSE)
-plot(hist1, col=rgb(0,0,1,1/4), xlim=c(0,1), 
-     xlab="Propensity score",
-     main="Histogram of propensity scores")  
-plot(hist0, col=rgb(1,0,0,1/4), xlim=c(0,1), add=T) 
+```{r Plots for all dichotomies}
+plot11 <- ggplot() + 
+  geom_histogram(data = filter(prop_scores_by_group11, group11 == 1), 
+                 bins = 50, aes(x = mean_propscores), 
+                 fill = "#611d08") + 
+  geom_histogram(data = filter(prop_scores_by_group11, group11 == 0), 
+                 bins = 50, aes(x = mean_propscores, y = -..count..),
+                 fill = "#084c61") +
+  geom_hline(yintercept = 0) +
+  ggtitle("Propensity score distribution group 11") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  annotate(geom = "label", x = 0, y = 50, label = "Treat", 
+           fill = "#611d08", color = "white", hjust = 0) +
+  annotate(geom = "label", x = 0, y = -50, label = "Control", 
+           fill = "#084c61", color = "white", hjust = 0) +
+  scale_y_continuous(label = abs) +
+  coord_cartesian(xlim = c(0, 1), ylim = c(-300, 950)) +
+  labs(x = "Propensity score", y = "Count")
 
+plot12 <- ggplot() + 
+  geom_histogram(data = filter(prop_scores_by_group12, group12 == 1), 
+                 bins = 50, aes(x = mean_propscores), 
+                 fill = "#611d08") + 
+  geom_histogram(data = filter(prop_scores_by_group12, group12 == 0), 
+                 bins = 50, aes(x = mean_propscores, y = -..count..),
+                 fill = "#084c61") +
+  geom_hline(yintercept = 0) +
+  ggtitle("Propensity score distribution group 12") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  annotate(geom = "label", x = 0, y = 50, label = "Treat", 
+           fill = "#611d08", color = "white", hjust = 0) +
+  annotate(geom = "label", x = 0, y = -50, label = "Control", 
+           fill = "#084c61", color = "white", hjust = 0) +
+  scale_y_continuous(label = abs) +
+  coord_cartesian(xlim = c(0, 1), ylim = c(-300, 950)) +
+  labs(x = "Propensity score", y = "Count")
+
+
+plot14 <- ggplot() + 
+  geom_histogram(data = filter(prop_scores_by_group14, group14 == 1), 
+                 bins = 50, aes(x = mean_propscores), 
+                 fill = "#611d08") + 
+  geom_histogram(data = filter(prop_scores_by_group14, group14 == 0), 
+                 bins = 50, aes(x = mean_propscores, y = -..count..),
+                 fill = "#084c61") +
+  geom_hline(yintercept = 0) +
+  ggtitle("Propensity score distribution group 14") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  annotate(geom = "label", x = 0, y = 50, label = "Treat", 
+           fill = "#611d08", color = "white", hjust = 0) +
+  annotate(geom = "label", x = 0, y = -50, label = "Control", 
+           fill = "#084c61", color = "white", hjust = 0) +
+  scale_y_continuous(label = abs) +
+  coord_cartesian(xlim = c(0, 1), ylim = c(-300, 950)) +
+  labs(x = "Propensity score", y = "Count")
+
+plot15 <- ggplot() + 
+  geom_histogram(data = filter(prop_scores_by_group15, group15 == 1), 
+                 bins = 50, aes(x = mean_propscores), 
+                 fill = "#611d08") + 
+  geom_histogram(data = filter(prop_scores_by_group15, group15 == 0), 
+                 bins = 50, aes(x = mean_propscores, y = -..count..),
+                 fill = "#084c61") +
+  geom_hline(yintercept = 0) +
+  ggtitle("Propensity score distribution group 15") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  annotate(geom = "label", x = 0, y = 50, label = "Treat", 
+           fill = "#611d08", color = "white", hjust = 0) +
+  annotate(geom = "label", x = 0, y = -50, label = "Control", 
+           fill = "#084c61", color = "white", hjust = 0) +
+  scale_y_continuous(label = abs) +
+  coord_cartesian(xlim = c(0, 1), ylim = c(-300, 950)) +
+  labs(x = "Propensity score", y = "Count")
+
+plotgrid <- ggarrange(plot11, plot12, plot14, plot15,
+          labels = "AUTO",
+          ncol = 2, nrow = 2)
 ```
 
 ```{r Remove redudant objects from workspace}
