@@ -56,30 +56,6 @@ save(fullmatches, file = "Workspaces/fullmatches.Rdata")
 ```
 
 
-### USING PAIR MATCH - run again with ATT now
-
-```{r Optimal pair matching using MatchIt}
-gc()
-start_time <- Sys.time()
-
-pairmatches <- apply(prop_scores[1:3,], 1, function(x) {matchit(group ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language), distance = x, method = "optimal", estimand = "ATT", data = step1_dat)})
-
-end_time <- Sys.time()
-```
-
-NB: pairmatch needs ATT/ATC cannot do ATE.
-
-```{r Outcome and computation time}
-summary(pairmatches[[1]])
-comptime_pairmatch <- end_time - start_time #1.2 hrs
-object.size(pairmatches) #13.5 MB
-```
-
-```{r Save pairmatch output}
-save(pairmatches, file = "Workspaces/pairmatches.Rdata")
-```
-
-
 # b. Create matched data sets - USING FULLMATCH
 
 ```{r Creating matches datasets}
@@ -93,14 +69,3 @@ length(unique(fullmatchdat[[1]]$subclass)) #3129 unique subclasses...
 save(fullmatchdat, file = "Workspaces/fullmatchdat.Rdata")
 ```
 
-
-#### USING PAIR MATCH
-
-```{r Creating matches datasets}
-#create datasets
-pairmatchdat <- lapply(pairmatches, function(x) {match.data(x, group = "all", distance = "prop.score", data = step1_dat, drop.unmatched = T)})
-```
-
-```{r}
-save(pairmatchdat, file = "Workspaces/pairmatchdat.Rdata")
-```

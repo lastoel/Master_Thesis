@@ -1,5 +1,5 @@
 ---
-title: "2. Analyses"
+title: "2.0 Step 1 - Propensity score estimation"
 author: "Lauke"
 date: "28/01/2022"
 output: html_document
@@ -13,8 +13,11 @@ load("~/GitHub/Master_Thesis/Analyses/Workspaces/step1_dat.Rdata")
 
 ```{r Libraries}
 library(dplyr)
+library(haven)
+library(knitr)
+library(kableExtra)
 library(MCMCpack) #needed for PSM procedure MCMClogit function
-library(tableone) #for CreateTableOne function
+library(mcmcplots) #multiple traceplots in 1 frame
 library(MatchIt)
 library(ggplot2)
 library(ggpubr) #to make grid plot
@@ -22,34 +25,77 @@ library(ggpubr) #to make grid plot
 
 Step 1: obtain a propensity score distribution for each pupil. 
 
-# Balance check 'before' - only dichotomy = 12
-```{r Balance check using TableOne}
-table1 <-
-  CreateTableOne(
-    vars = c(
-      "Gender",  
-      "AGE",
-      "GRADE", 
-      "ISCEDL", #ISCED level 
-      "ESCS", 
-      "Language" #language at home vs. test
-      ),
-strata = "group15",
-data = step1_dat,
-test = FALSE
-  )
+# Balance check 'before' USING MATCHIT
 
-print(table1, smd = T)
+```{r Balance check group = 11}
+balance_pre11 <- summary(matchit(
+      group11 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language),
+      method = NULL, #null method for 'pre-matching' balance
+      estimand = "ATE", 
+      data = step1_dat, 
+    ))
 ```
-```{r Balance check using MatchIt}
-balance_pre <- summary(matchit(
-      group15 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language),
-      method = NULL, #no method for 'pre-matching' balance
+
+```{r Balance check group = 12}
+balance_pre12 <- summary(matchit(
+      group12 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language),
+      method = NULL, #null method for 'pre-matching' balance
       estimand = "ATE", 
       data = step1_dat, 
     ))
 
-kable(as.data.frame(balance_pre$sum.all)[-1,1:4], digits = 2)
+kbl(as.data.frame(balance_pre12$sum.all)[-1,1:4], digits = 2, format = "latex", col.names = c("Mean Treated", "Mean Control", "SMD/Cohen's d", "VR"), caption = "Balance check on all data before matching age 12", booktabs = T, label = "balance_pre") 
+
+```
+
+```{r Balance check group = 14}
+balance_pre14 <- summary(matchit(
+      group14 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language),
+      method = NULL, #null method for 'pre-matching' balance
+      estimand = "ATE", 
+      data = step1_dat, 
+    ))
+```
+
+```{r Balance check group = 15}
+balance_pre15 <- summary(matchit(
+      group15 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language),
+      method = NULL, #null method for 'pre-matching' balance
+      estimand = "ATE", 
+      data = step1_dat, 
+    ))
+```
+
+```{r Table on all datasets (horizontal)}
+dat <- cbind(as.data.frame(balance_pre11$sum.all)[-1,1:4],
+             as.data.frame(balance_pre12$sum.all)[-1,1:4],
+             as.data.frame(balance_pre14$sum.all)[-1,1:4],
+             as.data.frame(balance_pre15$sum.all)[-1,1:4])
+
+kbl(dat, booktabs = T, format = "latex", caption = "Balance check on all data before matching all ages", 
+    col.names = rep(c("Mean Treated", "Mean Control", "SMD", "VR"), 4), label = "balance_pre_all") %>%
+add_header_above(c(" ", "Age 11" = 4, "Age 12" = 4, "Age 14" = 4, "Age 15" = 4)) %>%
+kable_styling(latex_options = c("scale_down"))
+```
+
+```{r Table on all datasets (vertical)}
+vertdat <- rbind(as.data.frame(balance_pre11$sum.all)[-1,1:4],
+             as.data.frame(balance_pre12$sum.all)[-1,1:4],
+             as.data.frame(balance_pre14$sum.all)[-1,1:4],
+             as.data.frame(balance_pre15$sum.all)[-1,1:4])
+
+kbl(vertdat, booktabs = T, longtable = T, format = "latex", digits = 2, caption = "Balance check on all data before matching all ages", label = "balance_pre_all") %>%
+kable_styling(position = "center", latex_options = c("repeat_header")) %>% 
+  pack_rows("Age 11", 1, 8, latex_gap_space = "2em") %>% 
+    pack_rows("Age 12", 9, 16, latex_gap_space = "2em") %>% 
+    pack_rows("Age 14", 17, 24, latex_gap_space = "2em") %>% 
+    pack_rows("Age 15", 25, 32, latex_gap_space = "2em")
+
+```
+
+
+```{r}
+(60*40)/(30)
 ```
 
 
@@ -60,8 +106,12 @@ kable(as.data.frame(balance_pre$sum.all)[-1,1:4], digits = 2)
 set.seed(123)
 posterior_11 <- MCMClogit(group11 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language), mcmc = 2000, burnin = 1000, thin = 2, data = step1_dat)
 
-plot(posterior_11) #convergence is fine
 summary(posterior_11)
+
+#assess convergence
+traplot(posterior_11)
+autocorr.plot(posterior_11)
+
 ```
 
 ```{r Estimate propensity scores for each pupil based on posterior samples of alpha and beta - AGE 11}
@@ -88,8 +138,11 @@ table(step1_dat$group11)
 set.seed(123)
 posterior_12 <- MCMClogit(group12 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language), mcmc = 2000, burnin = 1000, thin = 2, data = step1_dat)
 
-plot(posterior_12) #convergence is fine
 summary(posterior_12)
+
+#assess convergence
+traplot(posterior_12)
+autocorr.plot(posterior_12)
 ```
 
 ```{r Estimate propensity scores for each pupil based on posterior samples of alpha and beta - AGE 12}
@@ -116,8 +169,11 @@ table(step1_dat$group12)
 set.seed(123)
 posterior_14 <- MCMClogit(group14 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language), mcmc = 2000, burnin = 1000, thin = 2, data = step1_dat)
 
-plot(posterior_14) #convergence is fine
 summary(posterior_14)
+
+#assess convergence
+traplot(posterior_14)
+autocorr.plot(posterior_14)
 ```
 
 ```{r Estimate propensity scores for each pupil based on posterior samples of alpha and beta - AGE 14}
@@ -144,9 +200,13 @@ table(step1_dat$group14)
 set.seed(123)
 posterior_15 <- MCMClogit(group15 ~ as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language), mcmc = 2000, burnin = 1000, thin = 2, data = step1_dat)
 
-plot(posterior_15) #convergence is fine
 summary(posterior_15)
+
+#assess convergence
+traplot(posterior_15)
+autocorr.plot(posterior_15)
 ```
+
 
 ```{r Estimate propensity scores for each pupil based on posterior samples of alpha and beta - AGE 15}
 #create matrix containing all independent variables + intercept (1)

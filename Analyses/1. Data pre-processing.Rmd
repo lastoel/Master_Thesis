@@ -35,21 +35,30 @@ step1_dat$group15 <- ifelse(step1_dat$selection_age <= 15, 0, 1) #if selection a
 all.equal(step1_dat$group12, ifelse(step1_dat$selection_age <= 13, 0, 1)) #NB: 
 ```
 ```{r Latex table observations per age}
-kable(table(step1_dat$selection_age), 
-      format = "latex", 
-      caption = "Frequencies of age at first selection in OECD countries")
+kbl(table(step1_dat$selection_age), 
+    booktabs = T,
+    col.names = c("Age at first selection", "Frequency"),
+    label = "freq_sel_age",
+    format = "latex", 
+    caption = "Frequencies of age at first selection in OECD countries")
 ```
 
 ```{r Latex table selection age + groups}
-kable(sel_age %>% filter(OECD_status == 1) %>% 
+kbl(sel_age %>% filter(OECD_status == 1) %>% 
         dplyr::select(Country, selection_age) %>% 
         mutate(group11 = ifelse(selection_age <= 11, 0, 1),
                group12 = ifelse(selection_age <= 12, 0, 1),
                group14 = ifelse(selection_age <= 14, 0, 1),
                group15 = ifelse(selection_age <= 15, 0, 1)), 
-      format = "latex", 
-      col.names = c("Country", "Age at first selection", "Grouping by age 11", "Grouping by age 12", "Grouping by age 14", "Grouping by age 15"), 
-      caption = "Age at first selection of each OECD country")
+    format = "latex",
+    longtable = T,
+    booktabs = T,
+    col.names = c("Country", "Age at first selection", "Age 11", "Age 12", "Age 14", "Age 15"), 
+    caption = "Age at first selection of each OECD country", 
+    label = "sel_age") %>% 
+  add_header_above(c("", "", "Treatment assignment by age dichotomy" = 4)) %>% 
+  footnote(general = "Source: Annex 3B of the PISA 2018 Results: Volume 1") %>% 
+  kable_styling(latex_options = "repeat_header")
 ```
 
 ```{r Simple table}

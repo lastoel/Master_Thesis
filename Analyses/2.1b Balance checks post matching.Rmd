@@ -1,0 +1,207 @@
+---
+title: "2.1b Balance checks"
+author: "Lauke"
+date: "06/04/2022"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(haven)
+library(kableExtra)
+```
+
+```{r load data}
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/OLD/Backup - 3 iter trial/fullmatches_p12.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/OLD/Backup - 3 iter trial/fullmatchdat_p12.Rdata")
+```
+
+
+```{r Piece together datasets from 100 iterations AGE 11}
+fullmatchdat_p11_all <- c(fullmatchdat_p11_25, fullmatchdat_p11_50, fullmatchdat_p11_75, fullmatchdat_p11_100)
+save(fullmatchdat_p11_all, file = "Workspaces/fullmatchdat_p11_all.Rdata")
+rm(fullmatchdat_p11_25, fullmatchdat_p11_50, fullmatchdat_p11_75, fullmatchdat_p11_100)
+```
+
+```{r Piece together datasets from 500 iterations AGE 12}
+fullmatchdat_p12_all <- c(fullmatchdat_p12_25,
+                          fullmatchdat_p12_50,
+                          fullmatchdat_p12_75,
+                          fullmatchdat_p12_100,
+                          fullmatchdat_p12_125,
+                          fullmatchdat_p12_150,
+                          fullmatchdat_p12_175,
+                          fullmatchdat_p12_200,
+                          fullmatchdat_p12_225,
+                          fullmatchdat_p12_250,
+                          fullmatchdat_p12_275,
+                          fullmatchdat_p12_300,
+                          fullmatchdat_p12_325,
+                          fullmatchdat_p12_350,
+                          fullmatchdat_p12_375,
+                          fullmatchdat_p12_400,
+                          fullmatchdat_p12_425,
+                          fullmatchdat_p12_450,
+                          fullmatchdat_p12_475,
+                          fullmatchdat_p12_500
+)
+
+#fix for later:                          
+#c(get(paste0(fullmatchdat_p12_", seq(25, 500, by = 25), ", "))
+
+save(fullmatchdat_p12_all, file = "Workspaces/fullmatchdat_p12_all.Rdata")
+rm(
+  fullmatchdat_p12_25,
+  fullmatchdat_p12_50,
+  fullmatchdat_p12_75,
+  fullmatchdat_p12_100,
+  fullmatchdat_p12_125,
+  fullmatchdat_p12_150,
+  fullmatchdat_p12_175,
+  fullmatchdat_p12_200,
+  fullmatchdat_p12_225,
+  fullmatchdat_p12_250,
+  fullmatchdat_p12_275,
+  fullmatchdat_p12_300,
+  fullmatchdat_p12_325,
+  fullmatchdat_p12_350,
+  fullmatchdat_p12_375,
+  fullmatchdat_p12_400,
+  fullmatchdat_p12_425,
+  fullmatchdat_p12_450,
+  fullmatchdat_p12_475,
+  fullmatchdat_p12_500
+)
+```
+
+```{r check balance statistics on a SMALL matchit object}
+#this object just contains the first 3 iterations. This is used to be able to write functions that replicate the balance statistics the summary function on a matchit object gives, so that I can apply them to matched datasets (smaller objects)
+summary(fullmatches_p12[[1]])
+```
+
+Replicating balance indices:
+```{r Balance indices for All Data}
+#FOR "ALL DAT": 
+mean1 <- as.numeric(fullmatchdat_p12[[1]] %>% filter(group12 == 0) %>% summarise(mean(AGE)))
+mean2 <- as.numeric(fullmatchdat_p12[[1]] %>% filter(group12 == 1) %>% summarise(mean(AGE)))
+
+var1 <- as.numeric(fullmatchdat_p12[[1]] %>% filter(group12 == 0) %>% summarise(var(AGE)))
+var2 <- as.numeric(fullmatchdat_p12[[1]] %>% filter(group12 == 1) %>% summarise(var(AGE)))
+
+SMD <- (mean2 - mean1)/sqrt((var1 + var2)/2)
+VR <- var2/var1
+
+grouped_means <- function(matched_dataset, group_nr){
+  grouped_means <- matched_dataset %>% group_by(!!as.symbol(paste0("group", group_nr))) %>% summarise(across(where(is.numeric), ~mean(.x)))
+  return(grouped_means)
+  }
+
+grouped_means(fullmatchdat_p12_all[[1]], 12)
+
+```
+
+```{r Get grouped means for all AGE 12 datasets (not weighted)}
+grouped_means_12 <- fullmatchdat_p12_all %>% lapply(., grouped_means, group_nr = 12) %>% do.call(rbind, .) %>% as.data.frame()
+```
+
+```{r Balance indices for Matched Data}
+#write a function that calculated the balance indices for each variable in a matched dataset
+SMD_calculator_matched <- function(matched_dataset, group_nr){ #enter group_nr as 11, not as "11"
+  #calculate weighted means for each variable in dataset by group:
+  weighted_means <- matched_dataset %>% group_by(!!as.symbol(paste0("group", group_nr))) %>% summarise(across(where(is.numeric), ~ weighted.mean(.x, w = weights)))
+  #calculate variances for each variable in dataset by group:
+  grouped_variances <- matched_dataset %>% group_by(!!as.symbol(paste0("group", group_nr))) %>% summarise(across(where(is.numeric), ~var(.x)))
+  
+  #calculate SMD
+  SMD <- (weighted_means[2,] - weighted_means[1,])/sqrt((grouped_variances[1,] + grouped_variances[2,])/2)
+  
+  #return output
+  return(SMD)
+}
+
+VR_calculator_matched <- function(matched_dataset, group_nr){ #enter group_nr as 11, not as "11"
+  #calculate weighted variances for each variable in the dataset BY GROUP separately
+  weighted_variances_contr <- matched_dataset %>% filter(!!as.symbol(paste0("group", group_nr)) == 0) %>% dplyr::select(where(is.numeric)) %>% cov.wt(., wt = .$weights)
+  weighted_variances_treat <- matched_dataset %>% filter(!!as.symbol(paste0("group", group_nr)) == 1) %>% dplyr::select(where(is.numeric)) %>% cov.wt(., wt = .$weights)
+  
+  #calculate VR
+  VR <- diag(weighted_variances_treat$cov/weighted_variances_contr$cov)
+  
+  #return output
+  return(VR)
+}
+
+#check on old fullmatchdat with 3 iterations
+SMD_calculator_matched(fullmatchdat_p12[[1]], "12") #checks out
+VR_calculator_matched(fullmatchdat_p12[[1]], "12")
+
+```
+
+```{r Apply balance statistics functions to all AGE 12 matched datasets}
+#apply both functions to each dataset in the list of datasets: make a big ass data frame for SMD's and VR's to take averages over
+#NB: need to run this for fullmatchdat_11, 12, 14 and 15 
+SMDs_matched <- fullmatchdat_p12_all %>% lapply(., SMD_calculator_matched, group_nr = 12) %>% do.call(rbind, .) %>% as.data.frame()
+VRs_matched  <- fullmatchdat_p12_all %>% lapply(., VR_calculator_matched, group_nr= 12)  %>% do.call(rbind, .) %>% as.data.frame()
+```
+
+
+```{r Create table of mean and SE of balance indices per variable DO FOR EACH AGE GROUP}
+results <- matrix(0, 6, 6)
+rownames(results) <- c("Gender", "AGE", "GRADE", "ISCEDL", "ESCS", "Language")
+colnames(results) <- c("Mean Treated", "Mean Control", "SMD", "[95% CCI]", "VR", "[95% CCI]")
+
+
+results[, 1] <- grouped_means_12 %>% filter(group12 == 1) %>%   dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% colMeans() %>% round(digits = 2)
+results[, 2] <- grouped_means_12 %>% filter(group12 == 0) %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% colMeans() %>% round(digits = 2)
+results[, 3] <- SMDs_matched %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% colMeans() %>% round(digits = 2)
+
+results[, 4] <- paste0(
+  "[",
+  SMDs_matched %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% apply(., 2, quantile, 0.025) %>%
+    round(digits = 2),
+  ";",
+  SMDs_matched %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% apply(., 2, quantile, 0.975) %>%
+    round(digits = 2),
+  "]"
+)
+results[, 5] <-
+  SMDs_matched %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% colMeans() %>% round(digits = 2)
+
+results[, 6] <- paste0(
+  "[",
+  SMDs_matched %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% apply(., 2, quantile, 0.025) %>%
+    round(digits = 2),
+  ";",
+  SMDs_matched %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% apply(., 2, quantile, 0.975) %>%
+    round(digits = 2),
+  "]"
+)
+
+kbl(as.data.frame(results), 
+    booktabs = T, 
+    digits = 2, 
+    format = "latex",
+    caption = "Balance check on all data after matching dichotomy age 12", 
+    label = "balance_post_12")
+```
+
+
+```{r Check distribution of matched observations per subclass}
+classdist <- fullmatchdat_p12_all[[1]] %>% group_by(subclass) %>% count()
+
+hist(classdist$n)
+barplot(height = classdist$n, xlab = "Subclasses", names.arg = classdist$subclass)
+barplot(height = classdist$n[classdist$n > 2], names.arg = classdist$subclass[classdist$n > 2])
+
+length(classdist$n[classdist$n > 2]) #368 subclasses with more than 2 matches
+length(classdist$n[classdist$n > 3]) #317 with more than 3
+```
+
+
+
+
+
+
+
+
+

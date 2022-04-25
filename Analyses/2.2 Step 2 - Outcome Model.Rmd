@@ -1,0 +1,137 @@
+---
+title: "2.2 Outcome Model"
+author: "Lauke"
+date: "05/04/2022"
+output: html_document
+---
+
+2. Obtain an estimate for the treatment effect
+
+```{r Load data}
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/fullmatchdat_p12_all.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/PVs.Rdata")
+```
+
+
+```{r Libraries}
+library(dplyr)
+library(MCMCpack)
+library(haven)
+```
+
+Now we have 1000 different sets of matched units to pour into the analyses that estimates the treatment effect. First, we have to define the Y-variable on which we're regressing: ability.
+
+# WITH FULLMATCH
+
+```{r Create step2 matched data sets AGE 11}
+#add ability estimate to each matched dataset for step 2
+step2_dat_full_p11 <- lapply(fullmatchdat_p11_all, function(x) {inner_join(x, PVs[,c(1,12)], by = "CNTSTUID")})
+
+save(step2_dat_full_p11, file = "Workspaces/step2dat_full_p11.Rdata")
+str(step2_dat_full_p11[[1]]$subclass)
+```
+
+```{r Create step2 matched data sets AGE 12}
+#add ability estimate to each matched dataset for step 2
+step2_dat_full_p12 <- lapply(fullmatchdat_p12_all, function(x) {inner_join(x, PVs[,c(1,12)], by = "CNTSTUID")})
+
+save(step2_dat_full_p12, file = "Workspaces/step2dat_full_p12.Rdata")
+```
+
+### TEST ENVIRONMENT
+```{r test based on code by Chen on fullmatch object age 11}
+test <- MCMCregress(
+      ability ~ as.factor(group11) + as.factor(fullmatches_p11[[1]]$obj),
+      mcmc = 50,
+      burnin = 25, 
+      verbose = 1, 
+      data = step2_dat_full_p11[[1]]
+    )[,2]
+```
+
+Chen code gave: Error in base::try(posterior_treat_full[[i]], silent = TRUE) :  object 'posterior_treat_full' not found.
+Odd, stayed unsolved. When verbose = 1, it did start running, just very slow
+
+ 
+```{r test on my solution to just as.factor(subclass)}
+test2 <- MCMCregress(
+      ability ~ as.factor(group11) + as.factor(subclass),
+      mcmc = 20,
+      burnin = 10, 
+      thin = 2, 
+      verbose = 1,
+      data = step2_dat_full_p11[[1]]
+    )[,2]
+
+plot(test2)
+```
+Again: Error in base::try(posterior_treat_full[[i]], silent = TRUE) :  object 'posterior_treat_full' not found. ?!?!?!?!
+
+When posterior_treat_full was just removed from the picture entirely, it gave error: no loop for break/next, jumping to top level
+with verbose = 1 it does run, just takes long
+
+### REAL DEAL
+
+DECISION: 
+- I'll have 500 prop_score 12 matched datasets tonight
+- I'll still present the average balance statisitcis of the whole thing.
+- of every 50th matched dataset (so 10 in total), I estimate the treatment effect for 100 iterations (i.e. 1000 estimations in total)
+- that's IT, done, donezo byebye. For ext 1 simply say, do this 4 times 
+
+```{r Test on 1 dataset}
+posterior_treat_full_p12_test <- lapply(step2_dat_full_p12[1], function(x) {
+    MCMCregress(
+      ability ~ as.factor(group11) + as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language) + as.factor(subclass),
+      mcmc = 2,
+      burnin = 0,
+      verbose = 1,
+      data = x
+    )[,1:8]
+  })
+
+#2.6 minutes for 2 iterations on 1 dataset. but lot of starting time 
+2.6*50 #130 minutes for 100 iterations
+(130*10)/60 #21 hours for 100 iterations on 10 datasets??
+```
+
+
+```{r}
+start <- Sys.time()
+posterior_treat_full_p12 <- lapply(step2_dat_full_p12[c(seq(50,500, by = 100))], function(x) {
+    MCMCregress(
+      ability ~ as.factor(group11) + as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language) + as.factor(subclass),
+      mcmc = 100,
+      burnin = 0,
+      verbose = 1,
+      data = x
+    )[,1:8]
+  })
+
+end <- Sys.time()
+
+comptime_outcome_12 <- start - end 
+
+save(posterior_treat_full_p12, file = "Workspaces/posterior_treat_full_p12.Rdata")
+
+colMeans(as.data.frame(posterior_treat_full_p12))
+```
+
+```{r}
+plot(posterior_treat_full_p11[[1]]) #convergence of just 1 iteration
+summary(posterior_treat_full_p11[[1]]) #treatment effect -0.3772, non-significant
+
+m.iter <- 1000
+n.iter <- 3
+treatmentmatrix <- matrix(NA, nrow = n.iter, ncol = m.iter)
+i <- 1
+
+for (i in 1:n.iter){
+  treatmentmatrix[i,] <- posterior_treat_full[[i]][,2]
+}
+
+treatmentmatrix
+```
+
+
+
+
