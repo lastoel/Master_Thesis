@@ -74,6 +74,15 @@ rm(
 )
 ```
 
+```{r Recode Gender and Language to 0 and 1}
+fullmatchdat_p12_all <- fullmatchdat_p12_all %>% lapply(., mutate, 
+                                                        Gender = if_else(Gender == 1, 0, 1), 
+                                                        Language = if_else(Language == 1, 0, 1))
+
+fullmatchdat_p12_all[[1]]
+```
+
+
 ```{r check balance statistics on a SMALL matchit object}
 #this object just contains the first 3 iterations. This is used to be able to write functions that replicate the balance statistics the summary function on a matchit object gives, so that I can apply them to matched datasets (smaller objects)
 summary(fullmatches_p12[[1]])
@@ -106,7 +115,7 @@ grouped_means_12 <- fullmatchdat_p12_all %>% lapply(., grouped_means, group_nr =
 
 ```{r Balance indices for Matched Data}
 #write a function that calculated the balance indices for each variable in a matched dataset
-SMD_calculator_matched <- function(matched_dataset, group_nr){ #enter group_nr as 11, not as "11"
+SMD_calculator_matched <- function(matched_dataset, group_nr){ #enter group_nr as 12, not as "12"
   #calculate weighted means for each variable in dataset by group:
   weighted_means <- matched_dataset %>% group_by(!!as.symbol(paste0("group", group_nr))) %>% summarise(across(where(is.numeric), ~ weighted.mean(.x, w = weights)))
   #calculate variances for each variable in dataset by group:
@@ -119,7 +128,7 @@ SMD_calculator_matched <- function(matched_dataset, group_nr){ #enter group_nr a
   return(SMD)
 }
 
-VR_calculator_matched <- function(matched_dataset, group_nr){ #enter group_nr as 11, not as "11"
+VR_calculator_matched <- function(matched_dataset, group_nr){ #enter group_nr as 12, not as "12"
   #calculate weighted variances for each variable in the dataset BY GROUP separately
   weighted_variances_contr <- matched_dataset %>% filter(!!as.symbol(paste0("group", group_nr)) == 0) %>% dplyr::select(where(is.numeric)) %>% cov.wt(., wt = .$weights)
   weighted_variances_treat <- matched_dataset %>% filter(!!as.symbol(paste0("group", group_nr)) == 1) %>% dplyr::select(where(is.numeric)) %>% cov.wt(., wt = .$weights)
@@ -165,11 +174,11 @@ results[, 4] <- paste0(
   "]"
 )
 results[, 5] <-
-  SMDs_matched %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% colMeans() %>% round(digits = 2)
+  VRs_matched %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% colMeans() %>% round(digits = 2)
 
 results[, 6] <- paste0(
   "[",
-  SMDs_matched %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% apply(., 2, quantile, 0.025) %>%
+  VRs_matched %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% apply(., 2, quantile, 0.025) %>%
     round(digits = 2),
   ";",
   SMDs_matched %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% apply(., 2, quantile, 0.975) %>%
@@ -177,24 +186,33 @@ results[, 6] <- paste0(
   "]"
 )
 
+results
+
 kbl(as.data.frame(results), 
     booktabs = T, 
     digits = 2, 
     format = "latex",
     caption = "Balance check on all data after matching dichotomy age 12", 
     label = "balance_post_12")
+
+# NOTE THAT GENDER WAS STILL CODED AS 1 AND 2 INSTEAD OF 0 AND 1!! 
 ```
 
 
 ```{r Check distribution of matched observations per subclass}
-classdist <- fullmatchdat_p12_all[[1]] %>% group_by(subclass) %>% count()
+classdist_12 <- fullmatchdat_p12_all[[50]] %>% group_by(subclass) %>% count()
 
-hist(classdist$n)
-barplot(height = classdist$n, xlab = "Subclasses", names.arg = classdist$subclass)
-barplot(height = classdist$n[classdist$n > 2], names.arg = classdist$subclass[classdist$n > 2])
+hist(classdist_12$n)
+barplot(height = classdist_12$n, xlab = "Subclasses", names.arg = classdist_12$subclass)
+barplot(height = classdist_12t$n[classdist$n > 2], names.arg = classdist_12$subclass[classdist_12$n > 2])
 
-length(classdist$n[classdist$n > 2]) #368 subclasses with more than 2 matches
-length(classdist$n[classdist$n > 3]) #317 with more than 3
+length(classdist_12st$n[classdist_12lassdist$n > 2]) #368 subclasses with more than 2 matches
+length(classdist_12t$n[classdist_12ist$n > 3]) #317 with more than 
+
+
+
+classdist_11 <- fullmatchdat_p11_all[[50]] %>% group_by(subclass) %>% count()
+
 ```
 
 
