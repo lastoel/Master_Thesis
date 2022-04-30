@@ -7,6 +7,11 @@ output: html_document
 
 2. Obtain an estimate for the treatment effect
 
+```{r}
+set.seed(123)
+```
+
+
 ```{r Load data}
 load("~/GitHub/Master_Thesis/Analyses/Workspaces/fullmatchdat_p12_all.Rdata")
 load("~/GitHub/Master_Thesis/Analyses/Workspaces/PVs.Rdata")
@@ -14,9 +19,12 @@ load("~/GitHub/Master_Thesis/Analyses/Workspaces/PVs.Rdata")
 
 
 ```{r Libraries}
+library(haven)
 library(dplyr)
 library(MCMCpack)
-library(haven)
+library(mcmcplots)
+library(knitr)
+library(kableExtra)
 ```
 
 Now we have 1000 different sets of matched units to pour into the analyses that estimates the treatment effect. First, we have to define the Y-variable on which we're regressing: ability.
@@ -58,7 +66,6 @@ test2 <- MCMCregress(
       ability ~ as.factor(group11) + as.factor(subclass),
       mcmc = 20,
       burnin = 10, 
-      thin = 2, 
       verbose = 1,
       data = step2_dat_full_p11[[1]]
     )[,2]
@@ -95,42 +102,102 @@ posterior_treat_full_p12_test <- lapply(step2_dat_full_p12[1], function(x) {
 ```
 
 
-```{r}
-start <- Sys.time()
-posterior_treat_full_p12 <- lapply(step2_dat_full_p12[c(seq(50,500, by = 100))], function(x) {
+```{r Bayesian regression estimation AGE 12}
+set.seed(123)
+
+detach("package:doSNOW", unload = T) #b/c it masks a shit tonne
+library(parallel)
+
+gc() #clean out unused memory
+nclust <- parallel::detectCores() - 1
+cl <- makeCluster(nclust)
+
+#export objects to newly created R seshs
+clusterExport(cl, c('step2_dat_full_p12'))
+clusterEvalQ(cl, {(library("MCMCpack"))})
+
+start_time <- Sys.time()
+
+posterior_treat_full_p12 <- parLapply(cl, step2_dat_full_p12[c(seq(50,500, by = 50))], function(x) {
     MCMCregress(
-      ability ~ as.factor(group11) + as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language) + as.factor(subclass),
+      ability ~ as.factor(group12) + as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language) + as.factor(subclass),
+      mcmc = 100,
+      burnin = 0,
+      verbose = 1,
+      data = x
+    )[,1:8] #extract only the first 8 regression coefficient per set
+  })
+
+end_time <- Sys.time()
+
+stopCluster(cl)
+
+comptime_posterior_12 <- end_time - start_time
+
+save(posterior_treat_full_p12, file = "Workspaces/posterior_treat_full_p12.Rdata")
+save(comptime_posterior_12, file = "Workspaces/comptime_posterior_p12.Rdata")
+```
+
+```{r Backup}
+posterior_treat_full_p12 <- lapply(step2_dat_full_p12[c(seq(50,500, by = 50))], function(x) {
+    MCMCregress(
+      ability ~ as.factor(group12) + as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language) + as.factor(subclass),
       mcmc = 100,
       burnin = 0,
       verbose = 1,
       data = x
     )[,1:8]
   })
+```
 
-end <- Sys.time()
 
-comptime_outcome_12 <- start - end 
+```{r Quick check on convergence, echo = F}
+posterior_treat_full_p12 %>% lapply(., traplot)
+posterior_treat_full_p12 %>% lapply(., autocorr.plot)
+```
 
-save(posterior_treat_full_p12, file = "Workspaces/posterior_treat_full_p12.Rdata")
+```{r Final estimates - regular}
+summary(posterior_treat_full_p12[[1]]) #treatment effect -16.344, significant
 
-colMeans(as.data.frame(posterior_treat_full_p12))
+#average posterior mean:
+posterior_treat_full_p12 %>% lapply(., colMeans) %>% do.call(rbind, .) %>% as.data.frame() %>% colMeans
+
+#CCI WRONG - OLD (first pull together then quantile whole thing)
+#posterior_treat_full_p12 %>% do.call(rbind, .) %>% as.data.frame() %>% apply(., 2, quantile, 0.025)
+#posterior_treat_full_p12 %>% do.call(rbind, .) %>% as.data.frame() %>% apply(., 2, quantile, 0.975)
+
+#CCI: CORRECT - first quantile each then average 
+posterior_treat_full_p12 %>% lapply(., function(x) {apply(x, 2, quantile, 0.025)}) %>% do.call(rbind, .) %>% colMeans
+posterior_treat_full_p12 %>% lapply(., function(x) {apply(x, 2, quantile, 0.975)}) %>% do.call(rbind, .) %>% colMeans
+
+#sd: 
+posterior_treat_full_p12 %>% do.call(rbind, .) %>% as.data.frame() %>% apply(., 2, sd)
+
+
+results <- matrix(0, 8, 4)
+rownames(results) <- c("Intercept", "Treatment", "Gender", "AGE", "GRADE", "ISCEDL", "ESCS", "Language")
+colnames(results) <- c("Average Posterior Mean", "2.5%",  "97.5%", "Average Posterior SD")
+
+
+results[, 1] <- posterior_treat_full_p12 %>% lapply(., colMeans) %>% do.call(rbind, .) %>% as.data.frame() %>% colMeans
+results[, 2] <- posterior_treat_full_p12 %>% lapply(., function(x) {apply(x, 2, quantile, 0.025)}) %>% do.call(rbind, .) %>% colMeans
+results[, 3] <- posterior_treat_full_p12 %>% lapply(., function(x) {apply(x, 2, quantile, 0.975)}) %>% do.call(rbind, .) %>% colMeans
+results[, 4] <- posterior_treat_full_p12 %>% do.call(rbind, .) %>% as.data.frame() %>% apply(., 2, sd)
+
+kable(results, digits = 2)
+
+kbl(as.data.frame(results), 
+    booktabs = T, 
+    digits = 2, 
+    format = "latex",
+    caption = "Final estimates Bayesian regression", 
+    label = "outcome_norm")
 ```
 
 ```{r}
-plot(posterior_treat_full_p11[[1]]) #convergence of just 1 iteration
-summary(posterior_treat_full_p11[[1]]) #treatment effect -0.3772, non-significant
-
-m.iter <- 1000
-n.iter <- 3
-treatmentmatrix <- matrix(NA, nrow = n.iter, ncol = m.iter)
-i <- 1
-
-for (i in 1:n.iter){
-  treatmentmatrix[i,] <- posterior_treat_full[[i]][,2]
-}
-
-treatmentmatrix
+hist(posterior_treat_full_p12[[1]][,2])
 ```
+
 
 
 
