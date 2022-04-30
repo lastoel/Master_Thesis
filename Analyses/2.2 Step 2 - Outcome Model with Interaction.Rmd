@@ -1,0 +1,123 @@
+---
+title: "2.2 Step 2 - Outcome Model with Interaction"
+author: "Lauke"
+date: "27/04/2022"
+output: html_document
+---
+
+2. Obtain an estimate for the treatment effect including an INTERACTION EFFECT
+
+```{r}
+set.seed(123)
+```
+
+
+```{r Load data}
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/fullmatchdat_p12_all.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/PVs.Rdata")
+```
+
+
+```{r Libraries}
+library(haven)
+library(dplyr)
+library(MCMCpack)
+library(mcmcplots)
+```
+
+```{r Center variables for interaction effect} 
+#Contrast code factors and grand mean center age for ease of interpretation interaction effect
+fullmatchdat_p12_all_gmc <- fullmatchdat_p12_all %>% lapply(., mutate, 
+                                                        Gender = if_else(Gender == 1, -0.5, 0.5), #contrast coding on factors
+                                                        Language = if_else(Language == 1, -0.5, 0.5), 
+                                                        ISCEDL = if_else(ISCEDL == 2, -0.5, 0.5), #also for ISCEDL, with only 2 levels
+                                                        AGE = scale(AGE, scale = F) #grand mean center Age
+                                                        )
+fullmatchdat_p12_all_gmc[[1]]
+
+#add ability estimate to each matched dataset for step 2
+step2_dat_full_p12_gmc <- lapply(fullmatchdat_p12_all_gmc, function(x) {inner_join(x, PVs[,c(1,12)], by = "CNTSTUID")})
+
+save(step2_dat_full_p12_gmc, file = "Workspaces/step2dat_full_p12_gmc.Rdata")
+
+```
+
+```{r Bayesian regression estimation AGE 12 with INTERACTION}
+set.seed(123)
+detach("package:doSNOW", unload = T) #b/c it masks a shit tonne
+library(parallel)
+
+gc() #clean out unused memory
+nclust <- parallel::detectCores() - 1
+cl <- makeCluster(nclust)
+
+fullmatchdat_p12_all_gmc[[50]] %>% group_by(subclass) %>% count()
+fullmatchdat_p12_all_gmc[[100]] %>% group_by(subclass) %>% count()
+fullmatchdat_p12_all_gmc[[150]] %>% group_by(subclass) %>% count()
+
+#export objects to newly created R seshs
+clusterExport(cl, c('step2_dat_full_p12_gmc'))
+clusterEvalQ(cl, {(library("MCMCpack"))})
+
+start_time <- Sys.time()
+
+posterior_treat_full_p12_int <- parLapply(cl, step2_dat_full_p12_gmc[c(seq(50,500, by = 50))], function(x) {
+    MCMCregress(
+      ability ~ as.factor(group12) + as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language) + as.factor(group12)*ESCS + as.factor(subclass),
+      mcmc = 100,
+      burnin = 0, 
+      verbose = 1,
+      data = x
+    )[,c(1:8, (8+length(unique(x$subclass))))] #extract added coefficient on interaction
+  })
+
+end_time <- Sys.time()
+
+stopCluster(cl)
+
+comptime_posterior_12_int <- end_time - start_time
+
+save(posterior_treat_full_p12_int, file = "Workspaces/posterior_treat_full_p12_int.Rdata")
+save(comptime_posterior_12_int, file = "Workspaces/comptime_posterior_p12_int.Rdata")
+
+```
+
+```{r Quick check on convergence, results = F}
+posterior_treat_full_p12_int %>% lapply(., traplot)
+posterior_treat_full_p12_int %>% lapply(., autocorr.plot)
+```
+```{r Final estimates - interaction}
+summary(posterior_treat_full_p12_int[[1]]) #treatment effect sig, interaction is not. 
+
+#average posterior mean:
+posterior_treat_full_p12_int %>% lapply(., colMeans) %>% do.call(rbind, .) %>% as.data.frame() %>% colMeans
+
+#CCI: opt2 - first quantile each then average --> this is correct
+posterior_treat_full_p12_int %>% lapply(., function(x) {apply(x, 2, quantile, 0.025)}) %>% do.call(rbind, .) %>% colMeans
+posterior_treat_full_p12_int %>% lapply(., function(x) {apply(x, 2, quantile, 0.975)}) %>% do.call(rbind, .) %>% colMeans
+
+x <- posterior_treat_full_p12_int[[1]]
+
+#sd: 
+posterior_treat_full_p12_int %>% do.call(rbind, .) %>% as.data.frame() %>% apply(., 2, sd)
+
+results <- matrix(0, 9, 4)
+rownames(results) <- c("Intercept", "Treatment", "Gender", "AGE", "GRADE", "ISCEDL", "ESCS", "Language", "Treatment*ESCS")
+colnames(results) <- c("Average Posterior Mean", "2.5%",  "97.5%", "Average Posterior SD")
+
+
+results[, 1] <- posterior_treat_full_p12_int %>% lapply(., colMeans) %>% do.call(rbind, .) %>% as.data.frame() %>% colMeans
+results[, 2] <- posterior_treat_full_p12_int %>% lapply(., function(x) {apply(x, 2, quantile, 0.025)}) %>% do.call(rbind, .) %>% colMeans
+results[, 3] <- posterior_treat_full_p12_int %>% lapply(., function(x) {apply(x, 2, quantile, 0.975)}) %>% do.call(rbind, .) %>% colMeans
+results[, 4] <- posterior_treat_full_p12_int %>% do.call(rbind, .) %>% as.data.frame() %>% apply(., 2, sd)
+
+kable(results, digits = 2)
+
+kbl(as.data.frame(results), 
+    booktabs = T, 
+    digits = 2, 
+    format = "latex",
+    caption = "Final estimates Bayesian regression with interaction", 
+    label = "outcome_int")
+```
+
