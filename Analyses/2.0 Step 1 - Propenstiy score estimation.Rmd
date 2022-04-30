@@ -21,6 +21,7 @@ library(mcmcplots) #multiple traceplots in 1 frame
 library(MatchIt)
 library(ggplot2)
 library(ggpubr) #to make grid plot
+library(colorBlindness) #to check for colour blindness
 ```
 
 Step 1: obtain a propensity score distribution for each pupil. 
@@ -44,7 +45,7 @@ balance_pre12 <- summary(matchit(
       data = step1_dat, 
     ))
 
-kbl(as.data.frame(balance_pre12$sum.all)[-1,1:4], digits = 2, format = "latex", col.names = c("Mean Treated", "Mean Control", "SMD/Cohen's d", "VR"), caption = "Balance check on all data before matching age 12", booktabs = T, label = "balance_pre") 
+kbl(as.data.frame(balance_pre12$sum.all)[-1,1:4], digits = 2, format = "latex", col.names = c("Mean Treated", "Mean Control", "SMD/Cohen's d", "VR"), caption = "Balance check on all data before matching age 12", booktabs = T, label = "balance_pre_12") 
 
 ```
 
@@ -112,6 +113,8 @@ summary(posterior_11)
 traplot(posterior_11)
 autocorr.plot(posterior_11)
 
+#colourblindness check
+cvdPlot(traplot(posterior_11))
 ```
 
 ```{r Estimate propensity scores for each pupil based on posterior samples of alpha and beta - AGE 11}
@@ -257,20 +260,22 @@ prop_scores_by_group15 <- data.frame(mean_propscores = colMeans(prop_scores_15),
 
 
 ```{r Plots for all dichotomies}
+safecolours <- c("#117733", "#44AA99")
+
 plot11 <- ggplot() + 
   geom_histogram(data = filter(prop_scores_by_group11, group11 == 1), 
                  bins = 50, aes(x = mean_propscores), 
-                 fill = "#611d08") + 
+                 fill = "#117733") + 
   geom_histogram(data = filter(prop_scores_by_group11, group11 == 0), 
                  bins = 50, aes(x = mean_propscores, y = -..count..),
-                 fill = "#084c61") +
+                 fill = "#44AA99") +
   geom_hline(yintercept = 0) +
   ggtitle("Propensity score distribution group 11") +
   theme(plot.title = element_text(hjust = 0.5)) +
   annotate(geom = "label", x = 0, y = 50, label = "Treat", 
-           fill = "#611d08", color = "white", hjust = 0) +
+           fill = "#117733", color = "white", hjust = 0) +
   annotate(geom = "label", x = 0, y = -50, label = "Control", 
-           fill = "#084c61", color = "white", hjust = 0) +
+           fill = "#44AA99", color = "white", hjust = 0) +
   scale_y_continuous(label = abs) +
   coord_cartesian(xlim = c(0, 1), ylim = c(-300, 950)) +
   labs(x = "Propensity score", y = "Count")
@@ -278,17 +283,17 @@ plot11 <- ggplot() +
 plot12 <- ggplot() + 
   geom_histogram(data = filter(prop_scores_by_group12, group12 == 1), 
                  bins = 50, aes(x = mean_propscores), 
-                 fill = "#611d08") + 
+                 fill = "#117733") + 
   geom_histogram(data = filter(prop_scores_by_group12, group12 == 0), 
                  bins = 50, aes(x = mean_propscores, y = -..count..),
-                 fill = "#084c61") +
+                 fill = "#44AA99") +
   geom_hline(yintercept = 0) +
   ggtitle("Propensity score distribution group 12") +
   theme(plot.title = element_text(hjust = 0.5)) +
   annotate(geom = "label", x = 0, y = 50, label = "Treat", 
-           fill = "#611d08", color = "white", hjust = 0) +
+           fill = "#117733", color = "white", hjust = 0) +
   annotate(geom = "label", x = 0, y = -50, label = "Control", 
-           fill = "#084c61", color = "white", hjust = 0) +
+           fill = "#44AA99", color = "white", hjust = 0) +
   scale_y_continuous(label = abs) +
   coord_cartesian(xlim = c(0, 1), ylim = c(-300, 950)) +
   labs(x = "Propensity score", y = "Count")
@@ -297,17 +302,17 @@ plot12 <- ggplot() +
 plot14 <- ggplot() + 
   geom_histogram(data = filter(prop_scores_by_group14, group14 == 1), 
                  bins = 50, aes(x = mean_propscores), 
-                 fill = "#611d08") + 
+                 fill = "#117733") + 
   geom_histogram(data = filter(prop_scores_by_group14, group14 == 0), 
                  bins = 50, aes(x = mean_propscores, y = -..count..),
-                 fill = "#084c61") +
+                 fill = "#44AA99") +
   geom_hline(yintercept = 0) +
   ggtitle("Propensity score distribution group 14") +
   theme(plot.title = element_text(hjust = 0.5)) +
   annotate(geom = "label", x = 0, y = 50, label = "Treat", 
-           fill = "#611d08", color = "white", hjust = 0) +
+           fill = "#117733", color = "white", hjust = 0) +
   annotate(geom = "label", x = 0, y = -50, label = "Control", 
-           fill = "#084c61", color = "white", hjust = 0) +
+           fill = "#44AA99", color = "white", hjust = 0) +
   scale_y_continuous(label = abs) +
   coord_cartesian(xlim = c(0, 1), ylim = c(-300, 950)) +
   labs(x = "Propensity score", y = "Count")
@@ -315,17 +320,17 @@ plot14 <- ggplot() +
 plot15 <- ggplot() + 
   geom_histogram(data = filter(prop_scores_by_group15, group15 == 1), 
                  bins = 50, aes(x = mean_propscores), 
-                 fill = "#611d08") + 
+                 fill = "#117733") + 
   geom_histogram(data = filter(prop_scores_by_group15, group15 == 0), 
                  bins = 50, aes(x = mean_propscores, y = -..count..),
-                 fill = "#084c61") +
+                 fill = "#44AA99") +
   geom_hline(yintercept = 0) +
   ggtitle("Propensity score distribution group 15") +
   theme(plot.title = element_text(hjust = 0.5)) +
   annotate(geom = "label", x = 0, y = 50, label = "Treat", 
-           fill = "#611d08", color = "white", hjust = 0) +
+           fill = "#117733", color = "white", hjust = 0) +
   annotate(geom = "label", x = 0, y = -50, label = "Control", 
-           fill = "#084c61", color = "white", hjust = 0) +
+           fill = "#44AA99", color = "white", hjust = 0) +
   scale_y_continuous(label = abs) +
   coord_cartesian(xlim = c(0, 1), ylim = c(-300, 950)) +
   labs(x = "Propensity score", y = "Count")
@@ -333,7 +338,16 @@ plot15 <- ggplot() +
 plotgrid <- ggarrange(plot11, plot12, plot14, plot15,
           labels = "AUTO",
           ncol = 2, nrow = 2)
+
+save(plotgrid, file = "Figures/plotgrid.Rdata")
+
 ```
+
+```{r Colour blindness check}
+cvdPlot(plot11)
+```
+
+
 
 ```{r Remove redudant objects from workspace}
 rm(posterior, X_matrix, table1)
