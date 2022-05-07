@@ -9,6 +9,7 @@ output: html_document
 library(haven)
 library(dplyr)
 library(tidyr)
+library(kableExtra)
 ```
 
 ```{r Load in data}
@@ -34,7 +35,22 @@ step1_dat$group15 <- ifelse(step1_dat$selection_age <= 15, 0, 1) #if selection a
 
 all.equal(step1_dat$group12, ifelse(step1_dat$selection_age <= 13, 0, 1)) #NB: 
 ```
+```{r Save data step 1}
+save(step1_dat, file = "Workspaces/step1_dat.Rdata")
+```
+
+
 ```{r Latex table observations per age}
+table(step1_dat$selection_age)
+
+
+kable(table(step1_dat$selection_age), 
+    col.names = c("Age at first selection", "Frequency"),
+    label = "freq_sel_age",
+    caption = "Frequencies of age at first selection in OECD countries")
+
+
+
 kbl(table(step1_dat$selection_age), 
     booktabs = T,
     col.names = c("Age at first selection", "Frequency"),
