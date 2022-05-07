@@ -102,16 +102,20 @@ x <- posterior_treat_full_p12_int[[1]]
 posterior_treat_full_p12_int %>% do.call(rbind, .) %>% as.data.frame() %>% apply(., 2, sd)
 
 results <- matrix(0, 9, 4)
-rownames(results) <- c("Intercept", "Treatment", "Gender", "AGE", "GRADE", "ISCEDL", "ESCS", "Language", "Treatment*ESCS")
+rownames(results) <- c("Intercept", "Treatment", "Gender", "AGE", "GRADE", "ISCEDL", "ESCS", "Language", "Treatment*ESCS") 
 colnames(results) <- c("Average Posterior Mean", "2.5%",  "97.5%", "Average Posterior SD")
 
 
-results[, 1] <- posterior_treat_full_p12_int %>% lapply(., colMeans) %>% do.call(rbind, .) %>% as.data.frame() %>% colMeans
-results[, 2] <- posterior_treat_full_p12_int %>% lapply(., function(x) {apply(x, 2, quantile, 0.025)}) %>% do.call(rbind, .) %>% colMeans
-results[, 3] <- posterior_treat_full_p12_int %>% lapply(., function(x) {apply(x, 2, quantile, 0.975)}) %>% do.call(rbind, .) %>% colMeans
-results[, 4] <- posterior_treat_full_p12_int %>% do.call(rbind, .) %>% as.data.frame() %>% apply(., 2, sd)
+results[, 1] <- posterior_treat_full_p12_int %>% lapply(., colMeans) %>% do.call(rbind, .) %>% as.data.frame() %>% colMeans %>% round(digits =  2)
+results[, 2] <- paste0(
+  "[", 
+  posterior_treat_full_p12_int %>% lapply(., function(x) {apply(x, 2, quantile, 0.025)}) %>% do.call(rbind, .) %>% colMeans %>% round(digits = 2))
+                       
+results[, 3] <- paste0(posterior_treat_full_p12_int %>% lapply(., function(x) {apply(x, 2, quantile, 0.975)}) %>% do.call(rbind, .) %>% colMeans %>% round(digits = 2),
+                       "]")
+results[, 4] <- posterior_treat_full_p12_int %>% do.call(rbind, .) %>% as.data.frame() %>% apply(., 2, sd) %>% round(digits = 2)
 
-kable(results, digits = 2)
+results
 
 kbl(as.data.frame(results), 
     booktabs = T, 
