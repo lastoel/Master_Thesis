@@ -13,7 +13,7 @@ The goal of this thesis is to evaluate the applicability of two-step Bayesian pr
 |   ├── Data                      <- How to find the data used for these analyses
 │   ├── Figures                   <- Figures for the manuscript 
 |   ├── Scripts                   <- The scripts used for these analyses
-│   └── Workspaces                <- OUtput from the scripts fed to subsequent scripts
+│   └── Workspaces                <- Output from the scripts fed to subsequent scripts
 ├── src                           <- Source code for this project (HW)
 ├── .gitignore                    <- Files that are not taken into account when commiting (RO)
 ├── CITATION.md                   <- How to cite the code in this repository
