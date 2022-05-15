@@ -40,26 +40,24 @@ save(step1_dat, file = "Workspaces/step1_dat.Rdata")
 ```
 
 
-```{r Latex table observations per age}
-table(step1_dat$selection_age)
+```{r Latex table observations per age - Table 1 in manuscript}
+results <- as.data.frame(table(step1_dat$selection_age)) %>% mutate(Percentages = (Freq/(sum(Freq)))*100)
+freqtable <- results %>%
+  bind_rows(summarise_all(., ~if(is.numeric(.)) sum(.) else "Total"))
 
+results
 
-kable(table(step1_dat$selection_age), 
-    col.names = c("Age at first selection", "Frequency"),
-    label = "freq_sel_age",
-    caption = "Frequencies of age at first selection in OECD countries")
-
-
-
-kbl(table(step1_dat$selection_age), 
-    booktabs = T,
-    col.names = c("Age at first selection", "Frequency"),
-    label = "freq_sel_age",
-    format = "latex", 
-    caption = "Frequencies of age at first selection in OECD countries")
+kbl(
+  freqtable,
+  booktabs = T,
+  col.names = c("Age at first selection", "Frequency", "Percentage of total"),
+  label = "freq_sel_age",
+  format = "latex", 
+  digits = 0, 
+  caption = "Frequencies of age at first selection in OECD countries")
 ```
 
-```{r Latex table selection age + groups}
+```{r Latex table selection age + groups - Table B1 in Appendix B manuscript}
 kbl(sel_age %>% filter(OECD_status == 1) %>% 
         dplyr::select(Country, selection_age) %>% 
         mutate(group11 = ifelse(selection_age <= 11, 0, 1),
@@ -77,18 +75,6 @@ kbl(sel_age %>% filter(OECD_status == 1) %>%
   kable_styling(latex_options = "repeat_header")
 ```
 
-```{r Simple table}
-kable(sel_age %>% filter(OECD_status == 1) %>% 
-        dplyr::select(Country, selection_age),
-      format = "latex", 
-      col.names = c("Country", "Age at first selection"), 
-      caption = "Age at first selection of each OECD country")
-```
-
-
-```{r Save step1 data}
-save(step1_dat, file = "Workspaces/step1_dat.Rdata")
-```
 
 ```{r Prep data step 2: add ability estimates to dataset}
 #obtain 10 plausible values on the MATH items per pupil from the original dataset
@@ -102,6 +88,10 @@ save(PVs, file = "Workspaces/PVs.Rdata")
 
 
 ```{r Remove redudant objects from workspace}
-rm(QQQbook1_math, sel_age)
+rm(QQQbook1_math, sel_age, results)
+```
+
+```{r Print session info}
+sessionInfo()
 ```
 

@@ -44,9 +44,6 @@ balance_pre12 <- summary(matchit(
       estimand = "ATE", 
       data = step1_dat, 
     ))
-
-kbl(as.data.frame(balance_pre12$sum.all)[-1,1:4], digits = 2, format = "latex", col.names = c("Mean Treated", "Mean Control", "SMD/Cohen's d", "VR"), caption = "Balance check on all data before matching age 12", booktabs = T, label = "balance_pre_12") 
-
 ```
 
 ```{r Balance check group = 14}
@@ -67,7 +64,13 @@ balance_pre15 <- summary(matchit(
     ))
 ```
 
-```{r Table on all datasets (horizontal)}
+
+```{r Table on dataset age 12 - Table 2 in manuscript}
+kbl(as.data.frame(balance_pre12$sum.all)[-1,1:4], digits = 2, format = "latex", col.names = c("Mean Treated", "Mean Control", "SMD", "VR"), caption = "Balance check on all data before matching - treatment assignment age > 12", booktabs = T, label = "balance_pre_12") 
+```
+
+
+```{r Table on all datasets (horizontal) - not used in manuscript}
 dat <- cbind(as.data.frame(balance_pre11$sum.all)[-1,1:4],
              as.data.frame(balance_pre12$sum.all)[-1,1:4],
              as.data.frame(balance_pre14$sum.all)[-1,1:4],
@@ -79,7 +82,7 @@ add_header_above(c(" ", "Age 11" = 4, "Age 12" = 4, "Age 14" = 4, "Age 15" = 4))
 kable_styling(latex_options = c("scale_down"))
 ```
 
-```{r Table on all datasets (vertical)}
+```{r Table on all datasets (vertical) - Table B2 in Appendix B manuscript}
 vertdat <- rbind(as.data.frame(balance_pre11$sum.all)[-1,1:4],
              as.data.frame(balance_pre12$sum.all)[-1,1:4],
              as.data.frame(balance_pre14$sum.all)[-1,1:4],
@@ -92,11 +95,6 @@ kable_styling(position = "center", latex_options = c("repeat_header")) %>%
     pack_rows("Age 14", 17, 24, latex_gap_space = "2em") %>% 
     pack_rows("Age 15", 25, 32, latex_gap_space = "2em")
 
-```
-
-
-```{r}
-(60*40)/(30)
 ```
 
 
@@ -258,6 +256,10 @@ prop_scores_by_group15 <- data.frame(mean_propscores = colMeans(prop_scores_15),
   left_join(step1_dat %>% dplyr::select(CNTSTUID, group15), by = "CNTSTUID") 
 ```
 
+```{r SD of prop scores for group = 12}
+mean_sd_prop_scores_group12 <- data.frame(sd_propscores = prop_scores_12 %>% as.data.frame() %>% apply(., 2, sd)) %>% colMeans()
+```
+
 
 ```{r Plots for all dichotomies}
 safecolours <- c("#117733", "#44AA99")
@@ -270,7 +272,7 @@ plot11 <- ggplot() +
                  bins = 50, aes(x = mean_propscores, y = -..count..),
                  fill = "#44AA99") +
   geom_hline(yintercept = 0) +
-  ggtitle("Propensity score distribution group 11") +
+  ggtitle("Propensity score distribution Age AFS > 11") +
   theme(plot.title = element_text(hjust = 0.5)) +
   annotate(geom = "label", x = 0, y = 50, label = "Treat", 
            fill = "#117733", color = "white", hjust = 0) +
@@ -288,7 +290,7 @@ plot12 <- ggplot() +
                  bins = 50, aes(x = mean_propscores, y = -..count..),
                  fill = "#44AA99") +
   geom_hline(yintercept = 0) +
-  ggtitle("Propensity score distribution group 12") +
+  ggtitle("Propensity score distribution Age AFS > 12") +
   theme(plot.title = element_text(hjust = 0.5)) +
   annotate(geom = "label", x = 0, y = 50, label = "Treat", 
            fill = "#117733", color = "white", hjust = 0) +
@@ -307,7 +309,7 @@ plot14 <- ggplot() +
                  bins = 50, aes(x = mean_propscores, y = -..count..),
                  fill = "#44AA99") +
   geom_hline(yintercept = 0) +
-  ggtitle("Propensity score distribution group 14") +
+  ggtitle("Propensity score distribution Age AFS > 14") +
   theme(plot.title = element_text(hjust = 0.5)) +
   annotate(geom = "label", x = 0, y = 50, label = "Treat", 
            fill = "#117733", color = "white", hjust = 0) +
@@ -325,7 +327,7 @@ plot15 <- ggplot() +
                  bins = 50, aes(x = mean_propscores, y = -..count..),
                  fill = "#44AA99") +
   geom_hline(yintercept = 0) +
-  ggtitle("Propensity score distribution group 15") +
+  ggtitle("Propensity score distribution Age AFS > 15") +
   theme(plot.title = element_text(hjust = 0.5)) +
   annotate(geom = "label", x = 0, y = 50, label = "Treat", 
            fill = "#117733", color = "white", hjust = 0) +
@@ -335,24 +337,28 @@ plot15 <- ggplot() +
   coord_cartesian(xlim = c(0, 1), ylim = c(-300, 950)) +
   labs(x = "Propensity score", y = "Count")
 
+```
+
+```{r Colour blindness check}
+cvdPlot(plot12)
+```
+
+```{r Plot all together in 1 figure - Figure 1 in manuscript}
 plotgrid <- ggarrange(plot11, plot12, plot14, plot15,
           labels = "AUTO",
           ncol = 2, nrow = 2)
 
 save(plotgrid, file = "Figures/plotgrid.Rdata")
-
 ```
-
-```{r Colour blindness check}
-cvdPlot(plot11)
-```
-
 
 
 ```{r Remove redudant objects from workspace}
-rm(posterior, X_matrix, table1)
+rm(list=setdiff(ls(), c("step1_dat", "prop_scores_11", "prop_scores_12", "prop_scores_14", "prop_scores_15")))
 ```
 
+```{r Print session info}
+sessionInfo()
+```
 
 
 

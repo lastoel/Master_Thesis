@@ -125,3 +125,6 @@ kbl(as.data.frame(results),
     label = "outcome_int")
 ```
 
+```{r Print session info}
+sessionInfo()
+```

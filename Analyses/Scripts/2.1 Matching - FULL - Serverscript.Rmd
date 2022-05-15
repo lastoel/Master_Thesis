@@ -268,4 +268,7 @@ save(fullmatchdat_p14, file = "Workspaces/fullmatchdat_p14.Rdata")
 save(fullmatchdat_p15, file = "Workspaces/fullmatchdat_p15.Rdata")
 ```
 
+```{r Print session info}
+sessionInfo()
+```
 

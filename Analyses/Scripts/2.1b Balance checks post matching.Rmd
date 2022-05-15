@@ -181,7 +181,7 @@ results[, 6] <- paste0(
   VRs_matched %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% apply(., 2, quantile, 0.025) %>%
     round(digits = 2),
   "; ",
-  SMDs_matched %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% apply(., 2, quantile, 0.975) %>%
+  VRs_matched %>% dplyr::select(Gender, AGE, GRADE, ISCEDL, ESCS, Language) %>% apply(., 2, quantile, 0.975) %>%
     round(digits = 2),
   "]"
 )
@@ -195,7 +195,7 @@ kbl(as.data.frame(results),
     caption = "Balance check on all data after matching dichotomy age 12", 
     label = "balance_post_12")
 
-# NOTE THAT GENDER WAS STILL CODED AS 1 AND 2 INSTEAD OF 0 AND 1!! 
+# NOTE THAT GENDER and LANGUAGE WERE STILL CODED AS 1 AND 2 INSTEAD OF 0 AND 1!! 
 ```
 
 
@@ -214,6 +214,9 @@ classdist_11 <- fullmatchdat_p11_all[[50]] %>% group_by(subclass) %>% count()
 
 ```
 
+```{r Print session info}
+sessionInfo()
+```
 
 
 
