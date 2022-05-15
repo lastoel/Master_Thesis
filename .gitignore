@@ -1,10 +1,14 @@
+# Rstudio files
 .Rproj.user
 .Rhistory
 .Ruserdata
 
-/Analyses/Data
-/Analyses/Klad
-Repository_info.txt
+# Exclude local data file, since I do not own them
+/Analyses/LocalData
 
-.sav
-.xlsx
+# Draft code & old workspaces not used in the making of the manuscript
+/Analyses/Klad
+/Analyses/Scripts/OLD
+/Analyses/Workspaces/OLD
+
+
