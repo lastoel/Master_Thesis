@@ -1,5 +1,5 @@
 ---
-title: "2.1b Balance checks"
+title: "Intermediate - Balance checks post matching"
 author: "Lauke"
 date: "06/04/2022"
 output: html_document
@@ -11,17 +11,29 @@ library(haven)
 library(kableExtra)
 ```
 
-```{r load data}
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/OLD/Backup - 3 iter trial/fullmatches_p12.Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/OLD/Backup - 3 iter trial/fullmatchdat_p12.Rdata")
+```{r Load all partial matched datasets}
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_25_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_50_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_75_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_100_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_125_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_150_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_175_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_200_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_225_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_250_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_275_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_300_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_325_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_350_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_375_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_400_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_425_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_450_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_475_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_500_Rdata")
 ```
 
-
-```{r Piece together datasets from 100 iterations AGE 11}
-fullmatchdat_p11_all <- c(fullmatchdat_p11_25, fullmatchdat_p11_50, fullmatchdat_p11_75, fullmatchdat_p11_100)
-save(fullmatchdat_p11_all, file = "Workspaces/fullmatchdat_p11_all.Rdata")
-rm(fullmatchdat_p11_25, fullmatchdat_p11_50, fullmatchdat_p11_75, fullmatchdat_p11_100)
-```
 
 ```{r Piece together datasets from 500 iterations AGE 12}
 fullmatchdat_p12_all <- c(fullmatchdat_p12_25,
@@ -85,32 +97,22 @@ fullmatchdat_p12_all[[1]]
 
 ```{r check balance statistics on a SMALL matchit object}
 #this object just contains the first 3 iterations. This is used to be able to write functions that replicate the balance statistics the summary function on a matchit object gives, so that I can apply them to matched datasets (smaller objects)
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/fullmatchdat_TEST.Rdata")
 summary(fullmatches_p12[[1]])
 ```
 
 Replicating balance indices:
 ```{r Balance indices for All Data}
 #FOR "ALL DAT": 
-mean1 <- as.numeric(fullmatchdat_p12[[1]] %>% filter(group12 == 0) %>% summarise(mean(AGE)))
-mean2 <- as.numeric(fullmatchdat_p12[[1]] %>% filter(group12 == 1) %>% summarise(mean(AGE)))
+mean1 <- as.numeric(fullmatchdat_TEST[[1]] %>% filter(group12 == 0) %>% summarise(mean(AGE)))
+mean2 <- as.numeric(fullmatchdat_TEST[[1]] %>% filter(group12 == 1) %>% summarise(mean(AGE)))
 
-var1 <- as.numeric(fullmatchdat_p12[[1]] %>% filter(group12 == 0) %>% summarise(var(AGE)))
-var2 <- as.numeric(fullmatchdat_p12[[1]] %>% filter(group12 == 1) %>% summarise(var(AGE)))
+var1 <- as.numeric(fullmatchdat_TEST[[1]] %>% filter(group12 == 0) %>% summarise(var(AGE)))
+var2 <- as.numeric(fullmatchdat_TEST[[1]] %>% filter(group12 == 1) %>% summarise(var(AGE)))
 
 SMD <- (mean2 - mean1)/sqrt((var1 + var2)/2)
 VR <- var2/var1
 
-grouped_means <- function(matched_dataset, group_nr){
-  grouped_means <- matched_dataset %>% group_by(!!as.symbol(paste0("group", group_nr))) %>% summarise(across(where(is.numeric), ~mean(.x)))
-  return(grouped_means)
-  }
-
-grouped_means(fullmatchdat_p12_all[[1]], 12)
-
-```
-
-```{r Get grouped means for all AGE 12 datasets (not weighted)}
-grouped_means_12 <- fullmatchdat_p12_all %>% lapply(., grouped_means, group_nr = 12) %>% do.call(rbind, .) %>% as.data.frame()
 ```
 
 ```{r Balance indices for Matched Data}
@@ -141,20 +143,34 @@ VR_calculator_matched <- function(matched_dataset, group_nr){ #enter group_nr as
 }
 
 #check on old fullmatchdat with 3 iterations
-SMD_calculator_matched(fullmatchdat_p12[[1]], "12") #checks out
-VR_calculator_matched(fullmatchdat_p12[[1]], "12")
+SMD_calculator_matched(fullmatchdat_TEST[[1]], "12") #checks out
+VR_calculator_matched(fullmatchdat_TEST[[1]], "12")
 
+```
+
+
+```{r Grouped means function on all data}
+grouped_means <- function(matched_dataset, group_nr){
+  grouped_means <- matched_dataset %>% group_by(!!as.symbol(paste0("group", group_nr))) %>% summarise(across(where(is.numeric), ~mean(.x)))
+  return(grouped_means)
+  }
+
+grouped_means(fullmatchdat_p12_all[[1]], 12)
+```
+
+
+```{r Get grouped means for all AGE 12 datasets (not weighted)}
+grouped_means_12 <- fullmatchdat_p12_all %>% lapply(., grouped_means, group_nr = 12) %>% do.call(rbind, .) %>% as.data.frame()
 ```
 
 ```{r Apply balance statistics functions to all AGE 12 matched datasets}
 #apply both functions to each dataset in the list of datasets: make a big ass data frame for SMD's and VR's to take averages over
-#NB: need to run this for fullmatchdat_11, 12, 14 and 15 
 SMDs_matched <- fullmatchdat_p12_all %>% lapply(., SMD_calculator_matched, group_nr = 12) %>% do.call(rbind, .) %>% as.data.frame()
 VRs_matched  <- fullmatchdat_p12_all %>% lapply(., VR_calculator_matched, group_nr= 12)  %>% do.call(rbind, .) %>% as.data.frame()
 ```
 
 
-```{r Create table of mean and SE of balance indices per variable DO FOR EACH AGE GROUP}
+```{r Create table of mean and SE of balance indices per variable - Table 3 in manuscript}
 results <- matrix(0, 6, 6)
 rownames(results) <- c("Gender", "AGE", "GRADE", "ISCEDL", "ESCS", "Language")
 colnames(results) <- c("Mean Treated", "Mean Control", "SMD", "[95% CCI]", "VR", "[95% CCI]")
@@ -195,7 +211,7 @@ kbl(as.data.frame(results),
     caption = "Balance check on all data after matching dichotomy age 12", 
     label = "balance_post_12")
 
-# NOTE THAT GENDER and LANGUAGE WERE STILL CODED AS 1 AND 2 INSTEAD OF 0 AND 1!! 
+# NOTE THAT GENDER and LANGUAGE WERE STILL CODED AS 1 AND 2 INSTEAD OF 0 AND 1! This was edited manually for the table in the manuscript
 ```
 
 

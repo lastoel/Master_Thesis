@@ -1,5 +1,5 @@
 ---
-title: "2.2 Outcome Model"
+title: "Step 2 - Outcome Model"
 author: "Lauke"
 date: "05/04/2022"
 output: html_document
@@ -58,9 +58,8 @@ test <- MCMCregress(
 ```
 
 Chen code gave: Error in base::try(posterior_treat_full[[i]], silent = TRUE) :  object 'posterior_treat_full' not found.
-Odd, stayed unsolved. When verbose = 1, it did start running, just very slow
+Odd, stayed unsolved. When verbose = 1, it did start running, just very slow.
 
- 
 ```{r test on my solution to just as.factor(subclass)}
 test2 <- MCMCregress(
       ability ~ as.factor(group11) + as.factor(subclass),
@@ -72,20 +71,13 @@ test2 <- MCMCregress(
 
 plot(test2)
 ```
-Again: Error in base::try(posterior_treat_full[[i]], silent = TRUE) :  object 'posterior_treat_full' not found. ?!?!?!?!
+Again: Error in base::try(posterior_treat_full[[i]], silent = TRUE) :  object 'posterior_treat_full' not found.
 
-When posterior_treat_full was just removed from the picture entirely, it gave error: no loop for break/next, jumping to top level
-with verbose = 1 it does run, just takes long
+When posterior_treat_full was just removed from the picture entirely, it gave error: no loop for break/next, jumping to top level. With verbose = 1 it does run, just takes long
 
-### REAL DEAL
+### End test environment
 
-DECISION: 
-- I'll have 500 prop_score 12 matched datasets tonight
-- I'll still present the average balance statisitcis of the whole thing.
-- of every 50th matched dataset (so 10 in total), I estimate the treatment effect for 100 iterations (i.e. 1000 estimations in total)
-- that's IT, done, donezo byebye. For ext 1 simply say, do this 4 times 
-
-```{r Test on 1 dataset}
+```{r Trial on 1 dataset}
 posterior_treat_full_p12_test <- lapply(step2_dat_full_p12[1], function(x) {
     MCMCregress(
       ability ~ as.factor(group11) + as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language) + as.factor(subclass),
@@ -98,7 +90,7 @@ posterior_treat_full_p12_test <- lapply(step2_dat_full_p12[1], function(x) {
 
 #2.6 minutes for 2 iterations on 1 dataset. but lot of starting time 
 2.6*50 #130 minutes for 100 iterations
-(130*10)/60 #21 hours for 100 iterations on 10 datasets??
+(130*10)/60 #21 hours for 100 iterations on 10 datasets?
 ```
 
 
@@ -138,25 +130,12 @@ save(posterior_treat_full_p12, file = "Workspaces/posterior_treat_full_p12.Rdata
 save(comptime_posterior_12, file = "Workspaces/comptime_posterior_p12.Rdata")
 ```
 
-```{r Backup}
-posterior_treat_full_p12 <- lapply(step2_dat_full_p12[c(seq(50,500, by = 50))], function(x) {
-    MCMCregress(
-      ability ~ as.factor(group12) + as.factor(Gender) + AGE + GRADE + ISCEDL + ESCS + as.factor(Language) + as.factor(subclass),
-      mcmc = 100,
-      burnin = 0,
-      verbose = 1,
-      data = x
-    )[,1:8]
-  })
-```
-
-
 ```{r Quick check on convergence, echo = F}
 posterior_treat_full_p12 %>% lapply(., traplot)
 posterior_treat_full_p12 %>% lapply(., autocorr.plot)
 ```
 
-```{r Final estimates - regular}
+```{r Final estimates - regular - Table 4 manuscript}
 summary(posterior_treat_full_p12[[1]]) #treatment effect -16.344, significant
 
 #average posterior mean:
@@ -200,7 +179,7 @@ kbl(as.data.frame(results),
     label = "outcome_norm")
 ```
 
-```{r}
+```{r Quick check on distribution}
 hist(posterior_treat_full_p12[[1]][,2])
 ```
 

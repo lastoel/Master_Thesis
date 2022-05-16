@@ -58,7 +58,7 @@ for(j in seq(1,500, by = 25)){
   assign(paste0("fullmatchdat_p12_", as.symbol(j+24)), lapply(get(paste0("fullmatches_p12_", as.symbol(j+24))), function(x) {match.data(x, group = "all", distance = "prop.score", data= step1_dat, drop.unmatched = T)}))
   
   #save dataset age =< 12
-  save(list = paste0("fullmatchdat_p12_", as.symbol(j+24)), file = paste0("Analyses/Workspaces/fullmatchdat_p12_", as.symbol(j+24), ".Rdata"))
+  save(list = paste0("fullmatchdat_p12_", as.symbol(j+24)), file = paste0("Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_", as.symbol(j+24), ".Rdata"))
   
   #remove big files from last iteration
   rm(list = paste0("fullmatches_p12_", as.symbol(j+24))) 

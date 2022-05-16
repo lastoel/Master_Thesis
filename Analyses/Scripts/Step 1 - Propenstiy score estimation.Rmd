@@ -1,5 +1,5 @@
 ---
-title: "2.0 Step 1 - Propensity score estimation"
+title: "Step 1 - Propensity score estimation"
 author: "Lauke"
 date: "28/01/2022"
 output: html_document

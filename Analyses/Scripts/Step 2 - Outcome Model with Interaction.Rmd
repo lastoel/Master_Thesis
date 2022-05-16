@@ -1,5 +1,5 @@
 ---
-title: "2.2 Step 2 - Outcome Model with Interaction"
+title: "Step 2 - Outcome Model with Interaction"
 author: "Lauke"
 date: "27/04/2022"
 output: html_document
@@ -86,7 +86,8 @@ save(comptime_posterior_12_int, file = "Workspaces/comptime_posterior_p12_int.Rd
 posterior_treat_full_p12_int %>% lapply(., traplot)
 posterior_treat_full_p12_int %>% lapply(., autocorr.plot)
 ```
-```{r Final estimates - interaction}
+
+```{r Final estimates - interaction - Table 5 manuscript}
 summary(posterior_treat_full_p12_int[[1]]) #treatment effect sig, interaction is not. 
 
 #average posterior mean:

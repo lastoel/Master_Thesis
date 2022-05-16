@@ -1,5 +1,5 @@
 ---
-title: "1. Data pre-processing"
+title: "Data pre-processing"
 author: "Lauke"
 date: "22/03/2022"
 output: html_document
@@ -35,6 +35,7 @@ step1_dat$group15 <- ifelse(step1_dat$selection_age <= 15, 0, 1) #if selection a
 
 all.equal(step1_dat$group12, ifelse(step1_dat$selection_age <= 13, 0, 1)) #NB: 
 ```
+
 ```{r Save data step 1}
 save(step1_dat, file = "Workspaces/step1_dat.Rdata")
 ```

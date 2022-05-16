@@ -1,5 +1,5 @@
 ---
-title: "0. Data import"
+title: "Data import"
 author: "Lauke"
 date: "12/01/2022"
 output: html_document
