@@ -7,7 +7,7 @@ output: html_document
 
 2. Obtain an estimate for the treatment effect including an INTERACTION EFFECT
 
-```{r}
+```{r Set global seed}
 set.seed(123)
 ```
 

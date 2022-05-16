@@ -5,6 +5,10 @@ date: "28/01/2022"
 output: html_document
 ---
 
+```{r Set global seed}
+set.seed(123)
+```
+
 
 ```{r load in data}
 load("~/GitHub/Master_Thesis/Analyses/Workspaces/step1_dat.Rdata")

@@ -5,33 +5,33 @@ date: "06/04/2022"
 output: html_document
 ---
 
-```{r}
+```{r Libraries}
 library(dplyr)
 library(haven)
 library(kableExtra)
 ```
 
 ```{r Load all partial matched datasets}
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_25_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_50_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_75_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_100_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_125_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_150_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_175_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_200_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_225_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_250_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_275_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_300_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_325_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_350_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_375_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_400_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_425_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_450_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_475_Rdata")
-load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_500_Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_25.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_50.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_75.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_100.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_125.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_150.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_175.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_200.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_225.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_250.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_275.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_300.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_325.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_350.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_375.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_400.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_425.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_450.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_475.Rdata")
+load("~/GitHub/Master_Thesis/Analyses/Workspaces/Matched_partial_datasets/fullmatchdat_p12_500.Rdata")
 ```
 
 
@@ -62,6 +62,8 @@ fullmatchdat_p12_all <- c(fullmatchdat_p12_25,
 #c(get(paste0(fullmatchdat_p12_", seq(25, 500, by = 25), ", "))
 
 save(fullmatchdat_p12_all, file = "Workspaces/fullmatchdat_p12_all.Rdata")
+
+#remove the partial files from directory
 rm(
   fullmatchdat_p12_25,
   fullmatchdat_p12_50,
