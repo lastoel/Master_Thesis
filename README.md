@@ -36,7 +36,7 @@ Save this files in the empty "Data" folder and keep their file names. The script
 Run the scripts in this order: 
 
 |Run order| File name                         | Description of functionality |
-||-----------------------------------|----------------------|
+|---|--------------------------------|----------------------|
 |1. | `Data import.Rmd`                 | Reads in the student questionnaire and cognitive item data. Enriches those data with country level selection information. Outputs `QQQbook1_math.Rdata` and `sel_age.Rdata`. |
 |2. | `Data pre-processing.Rmd`         | Calls on `QQQbook1_math.Rdata` and  `sel_age.Rdata` and processes those to create the main data frame used for step 1, outputting `step1_dat.Rdata`. Contains code for Table 1 and Table B1 from the manuscript. Computes the plausible values needed for step 2 in advance, saved as `PVs.Rdata`. |
 |3. | `Step 1 - Propensity score estimation`  | Calls on `step1_dat.Rdata`. Checks pre-matching balance and performs the calculations necessary for step 1 of BPSA-2. Contains code for Table 2, Table B2, Figure 1, Figure 2 and Figures C1-C3 in Appendix C from the manuscript. Outputs four `prop_scores_xx.Rdata` files, one for each treatment assignment. |
