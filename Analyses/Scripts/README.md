@@ -1,0 +1,17 @@
+## Guide on how to reproduce the results from this study
+
+Run the scripts in this order: 
+
+|Run order| File name                         | Description of functionality |
+|---|--------------------------------|----------------------|
+|1. | `Data import.Rmd`                 | Reads in the student questionnaire and cognitive item data. Enriches those data with country level selection information. Outputs `QQQbook1_math.Rdata` and `sel_age.Rdata`. |
+|2. | `Data pre-processing.Rmd`         | Calls on `QQQbook1_math.Rdata` and  `sel_age.Rdata` and processes those to create the main data frame used for step 1, outputting `step1_dat.Rdata`. Contains code for Table 1 and Table B1 from the manuscript. Computes the plausible values needed for step 2 in advance, saved as `PVs.Rdata`. |
+|3. | `Step 1 - Propensity score estimation`  | Calls on `step1_dat.Rdata`. Checks pre-matching balance and performs the calculations necessary for step 1 of BPSA-2. Contains code for Table 2, Table B2, Figure 1, Figure 2 and Figures C1-C3 in Appendix C from the manuscript. Outputs four `prop_scores_xx.Rdata` files, one for each treatment assignment. |
+|4. | `Intermediate - Matching Age 12 - 1-500 by 25.R` | Calls on `prop_scores_12.Rdata` and `step1_dat.Rdata` and runs the optimal full matching algorithm on the data in chunks of 25 rows of propensity scores. Outputs 20 matched datasets to the folder "Matched_partial_dataset" and the time it took to compute the matches as `comptime_fullmatch_p12_all`.|
+|~ alternative| `Intermediate - Matching Ages 11-14-15 by 25.R` | Script performing the matching procedure for the three remaining treatment assignments. Not used for the manuscript due to computational time restrictions. |
+|~ alternative| `Intermediate - Matching - FULL - Serverscript.Rmd`  | Script performing the matching procedure all at once across all treatment assignments. Not used for the manuscript, but made available here for those who want to run the full analysis and have a virtual machine at their disposal. Bypasses the chunks of 25 iterations. |
+|5. | `Intermediate - Balance checks post matching.Rmd`  |  Imports all partial matched datasets and combines them back into one called `fullmatchdat_p12_all`. Contains code to recreate balance statistics based on old TEST data. This code can also be found in Appendix D of the manuscript. Also contains code for Table 3 from the manuscript.| 
+|6. | `Step 2 - Outcome Model.Rmd`      | Calls on `fullmatchdat_p12_all.Rdata` and `PVs.Rdata` to create `step2_dat`. Estimates the outcome model, resulting in a posterior called `posterior_treat_full_p12` and stores computation time as `comptime_posterior_12`.  Also contains code for the convergence check and Table 4 of the manuscript. |
+|7. | `Step 2 - Outcome Model with Interaction` | Calls on the same data as `Step 2 - Outcome Model.Rmd`. Script first centers the variables and then estimates the outcome model including an interaction effect, resulting in a posterior called `posterior_treat_full_p12_int` and stores computation time as `comptime_posterior_12_int`.  Also contains code for the convergence check and Table 5 of the manuscript. |
+
+These instructions can also be found in the main README file
