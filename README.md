@@ -54,6 +54,6 @@ Approval for the use of these data and execution of this research was granted by
 
 ## Ownership of the repository and contact information
 
-This study was conducted under the supervision of Marieke van Onna and Remco Feskens at Cito. This repository is and will remain publicly accessible and is managed by the author L.A. Stoel. The manuscript of this study is not yet published, but is available on request. If you have any questions about this repository, the code or if you wish to submit a request to receive the manuscript, feel free to contact me at l.a.stoel@students.uu.nl. 
+This study was conducted under the supervision of Marieke van Onna and Remco Feskens at Cito. This repository is and will remain publicly accessible and is managed by the author L.A. Stoel. The manuscript of this study is not yet published, but is available on request. If you have any questions about this repository, the code or if you wish to submit a request to receive the manuscript, feel free to contact me at l.a.stoel@uu.nl. 
 
 
